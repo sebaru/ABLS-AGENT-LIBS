@@ -15,7 +15,7 @@ endif()
 if(ABLS_SATELLITE_LIBS_VERSION MATCHES "^v?([0-9]+\\.[0-9]+)")
   set(ABLS_SATELLITE_LIBS_VERSION_NUMBER "${CMAKE_MATCH_1}")
 else()
-  set(ABLS_SATELLITE_LIBS_VERSION_NUMBER "1.0")
+  set(ABLS_SATELLITE_LIBS_VERSION_NUMBER "0.0")
 endif()
 
 project(abls-satellite-libs

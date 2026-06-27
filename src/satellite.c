@@ -26,23 +26,14 @@
  */
 
  #define _GNU_SOURCE
- #include <sys/resource.h>
  #include <glib.h>
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <sys/prctl.h>
  #include <unistd.h>
  #include <stdlib.h>
- #include <dirent.h>
  #include <string.h>
- #include <stdio.h>
  #include <locale.h>
-
- #include <sys/wait.h>
- #include <fcntl.h>
- #include <errno.h>
- #include <dlfcn.h>
- #include <link.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls_satellite_libs.h"
@@ -64,7 +55,7 @@
        Json_add_bool   ( RootNode, "mqtt_connected", (etat ? module->MQTT_connected : FALSE) );
        MQTT_Send_to_API ( RootNode, "HEARTBEAT" );
        Json_unref ( RootNode );
-      
+
        module->comm_next_update = time(NULL) + 60;                                                      /* Toutes les minutes */
        module->comm_status = etat;
      }
@@ -153,9 +144,9 @@
         }
      }
 /* ----------------------------------------------------- Connexion API ------------------------------------------------------ */
- 
+
 /* ----------------------------------------------------- Ecoute du MQTT ----------------------------------------------------- */
-    satellite->mqtt_api = 
+    satellite->mqtt_api =
     satellite->mqtt_local = Mqtt_init( thread_classe, thread_tech_id, thread_tech_id,
                                        Json_get_bool ( satellite->local_config, "mqtt_over_ssl" ),
                                        Json_get_string ( satellite->local_config, "mqtt_ca_file" ),
@@ -169,8 +160,8 @@
     JsonNode *RootNode = Json_create();
     if (RootNode)
      { Json_add_string ( RootNode, "tech_id", thread_tech_id );
-       Json_add_string ( RootNode, "thread_classe", thread_classe ); 
-       Json_add_int    ( RootNode, "syn_id", 2 ); 
+       Json_add_string ( RootNode, "thread_classe", thread_classe );
+       Json_add_int    ( RootNode, "syn_id", 2 );
        gchar *name = Json_get_string ( module->config, "description" );
        Json_add_string ( RootNode, "name", name );
        Json_add_string ( RootNode, "shortname", name );
@@ -196,17 +187,17 @@
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Satellite_end ( struct THREAD *module )
+ void Satellite_end ( struct SATELLITE *module )
   { Satellite_send_comm_to_master ( module, FALSE );
     mosquitto_disconnect( module->MQTT_session );
     mosquitto_loop_stop( module->MQTT_session, FALSE );
     mosquitto_destroy( module->MQTT_session );
-    g_slist_foreach ( module->MQTT_messages, (GFunc) Json_node_unref, NULL );
+    g_slist_foreach ( module->MQTT_messages, (GFunc) Json_unref, NULL );
     g_slist_free    ( module->MQTT_messages );   module->MQTT_messages = NULL;
-    if (module->vars) { g_free(module->vars);  module->vars   = NULL; }
-    Json_unref ( module->IOs );           module->IOs    = NULL;
-    Info_new( __func__, module->Thread_debug, LOG_NOTICE, "'%s' is DOWN", Json_get_string ( module->config, "thread_tech_id") );
+    if (module->vars) { g_free(module->vars);    module->vars = NULL; }
+    Json_unref ( module->IOs );                  module->IOs    = NULL;
+    Info( __func__, module->Thread_debug, LOG_NOTICE, "'%s' is DOWN", Json_get_string ( module->config, "thread_tech_id") );
     sleep(1);                       /* le temps d'un appel libsoup a Thread_ws_on_master_connected si Operation was cancelled */
-    pthread_exit(0);
+    exit(0);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
