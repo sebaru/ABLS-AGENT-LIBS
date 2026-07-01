@@ -12,7 +12,7 @@ if [ "${1:-}" = "clean" ]; then
 	rm -rf "$BUILD_DIR"
 fi
 
-echo "Building abls-satellite-libs..."
+echo "Building abls-agent-libs..."
 echo "Project directory: $PROJECT_DIR"
 echo "Build directory: $BUILD_DIR"
 echo "Number of processors: $(nproc)"

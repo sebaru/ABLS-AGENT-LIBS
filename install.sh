@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh — Installe abls-satellite-libs sur le système
+# install.sh — Installe abls-agent-libs sur le système
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

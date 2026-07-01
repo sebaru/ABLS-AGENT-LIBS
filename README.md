@@ -1,6 +1,6 @@
-# abls-satellite-libs
+# abls-agent-libs
 
-Reusable C shared library for ABLS satellite lifecycle orchestration.
+Reusable C shared library for ABLS agent lifecycle orchestration.
 
 ## Scope
 
