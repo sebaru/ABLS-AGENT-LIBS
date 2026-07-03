@@ -57,13 +57,17 @@
     gchar *api_url;                                                                                           /* URL de l'API */
     gint     comm_status;                                                       /* Report local du status de la communication */
     gint     comm_next_update;                                        /* Date du prochain update Watchdog COMM vers le master */
-    JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
     JsonNode *IOs;
     gint nbr_tour;
     gint nbr_tour_par_sec;
     gint nbr_tour_next_update;
     gint nbr_tour_delai;
+
     gint telemetrie_next_update;
+    JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
+    JsonNode *ai_max_rss;                                                                                      /* Maximum RSS */
+    JsonNode *ai_log_par_min;                                                                              /* Logs par minute */
+
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
 

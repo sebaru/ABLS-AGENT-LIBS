@@ -29,272 +29,96 @@
  #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
-/* MQTT_local_on_connect_CB: appelé par la librairie quand le broker est connecté                                             */
-/* Entrée: les parametres d'affichage de log de la librairie                                                                  */
-/* Sortie: Néant                                                                                                              */
-/******************************************************************************************************************************/
- static void MQTT_local_on_connect_CB( struct mosquitto *mosq, void *obj, int return_code )
-  { Info( __func__, "mqtt", "local", LOG_NOTICE, "Connected with return code %d: %s",
-              return_code, mosquitto_connack_string( return_code ) );
-    if (return_code == 0)
-     }
-  }
-/******************************************************************************************************************************/
-/* MQTT_local_on_disconnect_CB: appelé par la librairie quand le broker est déconnecté                                        */
-/* Entrée: les parametres d'affichage de log de la librairie                                                                  */
-/* Sortie: Néant                                                                                                              */
-/******************************************************************************************************************************/
- static void MQTT_local_on_disconnect_CB( struct mosquitto *mosq, void *obj, int return_code )
-  { Info( __func__, "mqtt", "local", LOG_NOTICE, "Disconnected with return code %d: %s",
-              return_code, mosquitto_connack_string( return_code ) );
-  }
-/******************************************************************************************************************************/
-/* MQTT_local_on_message_CB: Appelé par mosquitto lorsque l'on recoit un message MQTT de la part du MQTT local                */
-/* Entrée: les parametres MQTT                                                                                                */
-/* Sortie: Néant                                                                                                              */
-/******************************************************************************************************************************/
- static void MQTT_local_on_message_CB ( struct mosquitto *MQTT_session, void *obj, const struct mosquitto_message *msg )
-  { gchar **tokens = g_strsplit ( msg->topic, "/", 3 );
-    if (!tokens)    { Info( __func__, "mqtt", "local", LOG_ERR, "Tokens is null" ); return; }
-    if (!tokens[0]) { Info( __func__, "mqtt", "local", LOG_ERR, "Token[0] is null" ); goto end; }
-    if (!tokens[1]) { Info( __func__, "mqtt", "local", LOG_ERR, "Token[1] is null" ); goto end; }
-
-    JsonNode *request = Json_get_from_string ( msg->payload );
-    if (!request)
-     { Info( __func__, "mqtt", "local", LOG_WARNING, "MQTT Message from LOCAL dropped: not JSON or no payload" );
-       goto end;
-     }
-
-    gchar *topic = tokens[0];
-    if ( !strcmp ( topic, "SET_AI" ) )
-     { if (!tokens[2]) goto end; /* L'acronyme */
-       Json_add_string( request, "thread_tech_id", tokens[1] );
-       Json_add_string( request, "thread_acronyme", tokens[2] );
-       Dls_data_AI_set_from_thread_ai ( request );
-     }
-    else if ( !strcmp ( topic, "SET_DI" ) )
-     { if (!tokens[2]) goto end; /* L'acronyme */
-       Json_add_string( request, "thread_tech_id", tokens[1] );
-       Json_add_string( request, "thread_acronyme", tokens[2] );
-       Dls_data_DI_set_from_thread_di ( request );
-     }
-    else if ( !strcmp ( topic, "SET_WATCHDOG" ) )
-     { if (!tokens[2]) goto end; /* L'acronyme */
-       Json_add_string( request, "thread_tech_id", tokens[1] );
-       Json_add_string( request, "thread_acronyme", tokens[2] );
-       Dls_data_WATCHDOG_set_from_thread_watchdog ( request );
-     }
-    else if ( !strcmp ( topic, "SET_DI_PULSE" ) )
-     { if (!tokens[2]) goto end; /* L'acronyme */
-       gchar *from_thread_tech_id = Json_get_string ( request, "from_thread_tech_id" );
-       if (from_thread_tech_id)
-        { Info( __func__, "mqtt", from_thread_tech_id, LOG_INFO, "SET_DI_PULSE from '%s': '%s:%s'=PULSE",
-                    from_thread_tech_id, tokens[1], tokens[2] );
-          struct DLS_DI *bit = Dls_data_DI_lookup ( tokens[1], tokens[2] );
-          Dls_data_DI_set_pulse ( NULL, bit );
-        } else Info( __func__, "mqtt", "local", LOG_ERR, "SET_DI_PULSE: 'from_thread_tech_id' is missing" );
-     }
-    else if ( !strcmp ( topic, "SET_CI_PULSE" ) )
-     { if (!tokens[2]) goto end; /* L'acronyme */
-       gchar *from_thread_tech_id = Json_get_string ( request, "from_thread_tech_id" );
-       if (from_thread_tech_id)
-        { Info( __func__, "mqtt", from_thread_tech_id, LOG_INFO, "SET_CI_PULSE from '%s': '%s:%s'=PULSE",
-                    from_thread_tech_id, tokens[1], tokens[2] );
-          struct DLS_CI *bit = Dls_data_CI_lookup ( tokens[1], tokens[2] );
-          Dls_data_CI_set_pulse ( NULL, bit );
-        } else Info( __func__, "mqtt", "local", LOG_ERR, "SET_CI_PULSE: 'from_thread_tech_id' is missing" );
-     }
-    else if ( !strcmp ( topic, "SET_BUS" ) )
-     { gchar *commande = Json_get_string ( request, "commande" );
-       if (commande)
-        { Info( __func__, "mqtt", "local", LOG_NOTICE, "SET_BUS: Executing '%s'", commande );
-          system( commande );
-        }
-       else Info( __func__, "mqtt", "local", LOG_ERR, "SET_BUS: 'commande' is missing" );
-     }
-    else Info( __func__, "mqtt", "local", LOG_ERR, "tag inconnu: %s sur topic %s", topic, msg->topic );
-    Json_unref( request );
-
-end:
-    g_strfreev( tokens );                                                                      /* Libération des tokens topic */
-  }
-/******************************************************************************************************************************/
-/* MQTT_Start_MQTT_LOCAL: Appelé pour démarrer les interactions MQTT du master avec les slaves                                */
-/* Entrée: Néant                                                                                                              */
-/* Sortie: FALSE si erreur                                                                                                    */
-/******************************************************************************************************************************/
- gboolean MQTT_Start_MQTT_LOCAL ( void )
-  { gint retour;
-    gchar *agent_uuid = Json_get_string ( Config.config, "agent_uuid" );
-
-    Partage->MQTT_local_session = mosquitto_new( agent_uuid, TRUE, NULL );
-    if (!Partage->MQTT_local_session)
-     { Info( __func__, "mqtt", "local", LOG_ERR, "MQTT_local session error." ); return(FALSE); }
-
-    mosquitto_log_callback_set        ( Partage->MQTT_local_session, MQTT_on_log_CB );
-    mosquitto_connect_callback_set    ( Partage->MQTT_local_session, MQTT_local_on_connect_CB );
-    mosquitto_disconnect_callback_set ( Partage->MQTT_local_session, MQTT_local_on_disconnect_CB );
-    mosquitto_message_callback_set    ( Partage->MQTT_local_session, MQTT_local_on_message_CB );
-    mosquitto_username_pw_set         ( Partage->MQTT_local_session, Json_get_string ( Config.config, "agent_uuid" ), NULL );
-
-    /*if (Config.mqtt_over_ssl)
-     { mosquitto_tls_set( Partage->MQTT_local_session, NULL, "/etc/ssl/certs", NULL, NULL, NULL ); }*/
-
-    retour = mosquitto_connect( Partage->MQTT_local_session, Config.master_hostname, 1883, 60 );
-    if ( retour != MOSQ_ERR_SUCCESS )
-     { Info( __func__, "mqtt", "local", LOG_ERR, "MQTT_local connection to '%s:1883' error: %s",
-                 Config.master_hostname, mosquitto_strerror ( retour ) );
-       return(FALSE);
-     }
-
-    retour = mosquitto_loop_start( Partage->MQTT_local_session );
-    if ( retour != MOSQ_ERR_SUCCESS )
-     { Info( __func__, "mqtt", "local", LOG_ERR, "MQTT_local loop not started: %s", mosquitto_strerror ( retour ) );
-       return(FALSE);
-     }
-
-    Info( __func__, "mqtt", "local", LOG_NOTICE, "MQTT_local loop started" );
-    return(TRUE);
-  }
-/******************************************************************************************************************************/
-/* MQTT_Stop_MQTT_API: Appelé pour stopper les interactions MQTT du master avec l'API                                         */
-/* Entrée: Néant                                                                                                              */
-/* Sortie: Néant                                                                                                              */
-/******************************************************************************************************************************/
- void MQTT_Stop_MQTT_LOCAL ( void )
-  { mosquitto_disconnect( Partage->MQTT_local_session );
-    mosquitto_loop_stop( Partage->MQTT_local_session, FALSE );
-    mosquitto_destroy( Partage->MQTT_local_session );
-    Partage->MQTT_local_session = NULL;
-  }
-/******************************************************************************************************************************/
-/* MQTT_Send_to_topic: Envoie un node sur un topic MQTT via le broker                                                         */
-/* Entrée: la structure MQTT, le topic, le node, le flag de retenu                                                            */
-/* Sortie: néant                                                                                                              */
-/******************************************************************************************************************************/
- void MQTT_Send_to_topic ( struct mosquitto *mqtt_session, JsonNode *node, gboolean retain, gchar *format, ... )
-  { va_list ap;
-    if (! (mqtt_session && format) ) return;
-
-    va_start( ap, format );
-    gsize taille = g_printf_string_upper_bound ( format, ap );
-    va_end ( ap );
-    gchar *topic = g_try_malloc(taille+1);
-    if (!topic)
-     { Info( __func__, "mqtt", "local", LOG_ERR, "Memory Error for '%s'", format );
-       return;
-     }
-
-    va_start( ap, format );
-    g_vsnprintf ( topic, taille, format, ap );
-    va_end ( ap );
-
-    gboolean free_node=FALSE;
-    if (!node) { node = Json_create(); free_node = TRUE; }
-    gchar *buffer = Json_to_string( node );
-    if (buffer)
-     { gint retour = mosquitto_publish( mqtt_session, NULL, topic, strlen(buffer), buffer, 2, retain );
-       if (retour != MOSQ_ERR_SUCCESS)
-        { Info( __func__, "mqtt", "local", LOG_ERR, "Error when publishing '%s'", mosquitto_strerror ( retour ) ); }
-       g_free(buffer);
-     }
-    if (free_node) Json_unref(node);
-    g_free(topic);
-  }
-/******************************************************************************************************************************/
 /* Mqtt_Send_AI: Envoie le bit AI au master                                                                                   */
-/* Entrée: la structure MQTT, l'AI, la valeur et le range                                                                     */
+/* Entrée: la structure ABLS_AGENT, l'AI, la valeur et le range                                                               */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void MQTT_Send_AI ( struct THREAD *module, JsonNode *thread_ai, gdouble valeur, gboolean in_range )
-  { if (! (module && thread_ai)) return;
-    gdouble  old_valeur   = Json_get_double ( thread_ai, "valeur" );
-    gboolean old_in_range = Json_get_bool   ( thread_ai, "in_range" );
-    gboolean need_sync    = Json_get_bool   ( thread_ai, "need_sync" );
+ void Mqtt_Send_AI ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range )
+  { if (! (agent && agent_ai)) return;
+    gdouble  old_valeur   = Json_get_double ( agent_ai, "valeur" );
+    gboolean old_in_range = Json_get_bool   ( agent_ai, "in_range" );
+    gboolean need_sync    = Json_get_bool   ( agent_ai, "need_sync" );
 
     if ( need_sync || old_valeur != valeur || old_in_range != in_range )
-     { Json_add_double( thread_ai, "valeur", valeur );
-       Json_add_bool( thread_ai, "in_range", in_range );
-       Json_add_bool( thread_ai, "need_sync", FALSE );
-       gchar *thread_tech_id = Json_get_string ( thread_ai, "thread_tech_id" );
-       gchar *thread_acronyme = Json_get_string ( thread_ai, "thread_acronyme" );
-       Info( __func__, "mqtt", "local", LOG_DEBUG, "'%s:%s' = %f (in_range=%d)", thread_tech_id, thread_acronyme, valeur, in_range );
+     { Json_add_double( agent_ai, "valeur", valeur );
+       Json_add_bool( agent_ai, "in_range", in_range );
+       Json_add_bool( agent_ai, "need_sync", FALSE );
+       gchar *agent_tech_id = Json_get_string ( agent_ai, "agent_tech_id" );
+       gchar *agent_acronyme = Json_get_string ( agent_ai, "agent_acronyme" );
+       Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %f (in_range=%d)", agent_tech_id, agent_acronyme, valeur, in_range );
        JsonNode *RootNode = Json_create();
        if (!RootNode) return;
        Json_add_double( RootNode, "valeur", valeur );
        Json_add_bool( RootNode, "in_range", in_range );
-       MQTT_Send_to_topic ( module->MQTT_session, RootNode, TRUE, "SET_AI/%s/%s", thread_tech_id, thread_acronyme );
+       Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_AI/%s/%s", agent_tech_id, agent_acronyme );
        Json_unref( RootNode );
      }
   }
 /******************************************************************************************************************************/
-/* MQTT_Send_DI: Envoie le bit DI au master                                                                                   */
-/* Entrée: la structure MQTT, la DI, la valeur                                                                                */
+/* Mqtt_Send_DI: Envoie le bit DI au master                                                                                   */
+/* Entrée: la structure ABLS_AGENT, la DI, la valeur                                                                          */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void MQTT_Send_DI ( struct THREAD *module, JsonNode *thread_di, gboolean etat )
-  { if (! (module && thread_di)) return;
-    gboolean old_etat   = Json_get_bool ( thread_di, "etat" );
-    gboolean need_sync  = Json_get_bool ( thread_di, "need_sync" );
+ void Mqtt_Send_DI ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat )
+  { if (! (agent && agent_di)) return;
+    gboolean old_etat   = Json_get_bool ( agent_di, "etat" );
+    gboolean need_sync  = Json_get_bool ( agent_di, "need_sync" );
 
     if ( need_sync || (old_etat != etat) )
-     { Json_add_bool( thread_di, "etat", (etat ? TRUE : FALSE) );
-       Json_add_bool( thread_di, "need_sync", FALSE );
-       gchar *thread_tech_id = Json_get_string ( thread_di, "thread_tech_id" );
-       gchar *thread_acronyme = Json_get_string ( thread_di, "thread_acronyme" );
-       Info( __func__, "mqtt", "local", LOG_DEBUG, "'%s:%s' = %d", thread_tech_id, thread_acronyme, etat );
+     { Json_add_bool( agent_di, "etat", (etat ? TRUE : FALSE) );
+       Json_add_bool( agent_di, "need_sync", FALSE );
+       gchar *agent_tech_id = Json_get_string ( agent_di, "agent_tech_id" );
+       gchar *agent_acronyme = Json_get_string ( agent_di, "agent_acronyme" );
+       Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent_tech_id, agent_acronyme, etat );
        JsonNode *RootNode = Json_create();
        if (!RootNode) return;
        Json_add_bool( RootNode, "etat", etat );
-       MQTT_Send_to_topic ( module->MQTT_session, RootNode, TRUE, "SET_DI/%s/%s", thread_tech_id, thread_acronyme );
+       Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_DI/%s/%s", agent_tech_id, agent_acronyme );
        Json_unref( RootNode );
      }
   }
 /******************************************************************************************************************************/
-/* MQTT_Send_DI: Envoie le bit DI au master, au format pulse                                                                  */
-/* Entrée: la structure MQTT, la DI, la valeur                                                                                */
+/* Mqtt_Send_DI_pulse: Envoie le bit DI au master, au format pulse                                                            */
+/* Entrée: la structure ABLS_AGENT, la DI, la valeur                                                                          */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void MQTT_Send_DI_pulse ( struct THREAD *module, gchar *tech_id, gchar *acronyme )
-  { if (! (module && tech_id && acronyme)) return;
+ void Mqtt_Send_DI_pulse ( struct ABLS_AGENT *agent, gchar *tech_id, gchar *acronyme )
+  { if (! (agent && tech_id && acronyme)) return;
     JsonNode *thread_di = Json_create();
     if (!thread_di) return;
-    gchar *thread_tech_id = Json_get_string ( module->config, "thread_tech_id" );
-    Json_add_string( thread_di, "from_thread_tech_id", thread_tech_id );
-    Info( __func__, "mqtt", "local", LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
-    MQTT_Send_to_topic ( module->MQTT_session, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
+    Json_add_string( thread_di, "from_thread_tech_id", agent->agent_tech_id );
+    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
+    Mqtt_send_message ( agent->mqtt_local, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
     Json_unref( thread_di );
   }
 /******************************************************************************************************************************/
-/* MQTT_Send_CI_pulse: Envoie une impulsion CI au master                                                                      */
-/* Entrée: la structure THREAD, le noeud CI                                                                                   */
+/* Mqtt_Send_CI_pulse: Envoie une impulsion CI au master                                                                      */
+/* Entrée: la structure ABLS_AGENT, le noeud CI                                                                                   */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void MQTT_Send_CI_pulse ( struct THREAD *module, JsonNode *thread_ci )
-  { if (! (module && thread_ci)) return;
-    gchar *thread_tech_id  = Json_get_string ( thread_ci, "thread_tech_id" );
+ void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *thread_ci )
+  { if (! (agent && thread_ci)) return;
     gchar *thread_acronyme = Json_get_string ( thread_ci, "thread_acronyme" );
-    Info( __func__, "mqtt", "local", LOG_DEBUG, "'%s:%s' = PULSE", thread_tech_id, thread_acronyme );
+    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", agent->agent_tech_id, thread_acronyme );
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
-    Json_add_string( RootNode, "from_thread_tech_id", Json_get_string ( module->config, "thread_tech_id" ) );
-    MQTT_Send_to_topic ( module->MQTT_session, RootNode, FALSE, "SET_CI_PULSE/%s/%s", thread_tech_id, thread_acronyme );
+    Json_add_string( RootNode, "from_thread_tech_id", agent->agent_tech_id );
+    Mqtt_send_message ( agent->mqtt_local, RootNode, FALSE, "SET_CI_PULSE/%s/%s", agent->agent_tech_id, thread_acronyme );
     Json_unref( RootNode );
   }
 /******************************************************************************************************************************/
-/* MQTT_Send_WATCHDOG: Envoie le WATCHDOG au master                                                                           */
-/* Entrée: la structure MQTT, le watchdog, la consigne                                                                        */
+/* Mqtt_Send_WATCHDOG: Envoie le WATCHDOG au master                                                                           */
+/* Entrée: la structure ABLS_AGENT, le watchdog, la consigne                                                                  */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void MQTT_Send_WATCHDOG ( struct THREAD *module, gchar *thread_acronyme, gint consigne )
-  { if (! (module && thread_acronyme)) return;
-    JsonNode *thread_watchdog = Json_create();
-    if(!thread_watchdog) return;
-    gchar *thread_tech_id = Json_get_string ( module->config, "thread_tech_id" );
-    Json_add_int( thread_watchdog, "consigne", consigne );
+ void Mqtt_Send_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gint consigne )
+  { if (! (agent && agent_acronyme)) return;
+    JsonNode *agent_watchdog = Json_create();
+    if(!agent_watchdog) return;
+    Json_add_int( agent_watchdog, "consigne", consigne );
 
-    Info( __func__, "mqtt", "local", LOG_DEBUG, "'%s:%s' = %d", thread_tech_id, thread_acronyme, consigne );
-    MQTT_Send_to_topic ( module->MQTT_session, thread_watchdog, TRUE, "SET_WATCHDOG/%s/%s", thread_tech_id, thread_acronyme );
-    Json_unref( thread_watchdog );
+    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent->agent_tech_id, agent_acronyme, consigne );
+    Mqtt_send_message ( agent->mqtt_local, agent_watchdog, TRUE, "SET_WATCHDOG/%s/%s", agent->agent_tech_id, agent_acronyme );
+    Json_unref( agent_watchdog );
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/

@@ -44,7 +44,7 @@
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ai", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add AI %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add AI %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_add_bool ( node, "in_range", FALSE );       /* Ajoute un flag first turn pour envoyer au master des le 1er tour */
     Json_add_bool ( node, "need_sync", TRUE );       /* Ajoute un flag first turn pour envoyer au master des le 1er tour */
@@ -65,7 +65,7 @@
     Json_add_string ( node, "libelle", libelle );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/di", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add DI %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add DI %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_add_bool ( node, "need_sync", TRUE );            /* Ajoute un flag first turn pour envoyer au master des le 1er tour */
     Json_array_add_one_element ( agent->IOs, "IOs", node );
@@ -87,7 +87,7 @@
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ci", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add CI %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add CI %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_array_add_one_element ( agent->IOs, "IOs", node );
     return(node);
@@ -107,7 +107,7 @@
     Json_add_bool   ( node, "mono", mono );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/thread/add/do", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add DO %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add DO %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_array_add_one_element ( agent->IOs, "IOs", node );
     return(node);
@@ -128,7 +128,7 @@
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ao", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add AO %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add AO %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_array_add_one_element ( agent->IOs, "IOs", node );
     return(node);
@@ -147,7 +147,7 @@
     Json_add_string ( node, "libelle", libelle );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/horloge", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add HORLOGE %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add HORLOGE %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_array_add_one_element ( agent->IOs, "IOs", node );
     return(node);
@@ -167,7 +167,7 @@
     Json_add_int    ( node, "minute", minute );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/add/tick", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR,
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR,
                  "Could not add HORLOGE tick %s:%d:%d to API",
                  Json_get_string ( bit, "acronyme" ), heure, minute );
      }
@@ -184,7 +184,7 @@
     Json_add_string ( bit, "classe", "HORLOGE" );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/del/tick", bit );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR,
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR,
                  "Could not DEL HORLOGE tick for '%s'", Json_get_string ( bit, "acronyme" ) );
      }
     Json_unref ( api_result );
@@ -203,7 +203,7 @@
     Json_add_string ( node, "libelle", libelle );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/thread/add/watchdog", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Could not add WATCHDOG %s to API", agent_acronyme ); }
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add WATCHDOG %s to API", agent_acronyme ); }
     Json_unref ( api_result );
     Json_array_add_one_element ( agent->IOs, "IOs", node );
     return(node);

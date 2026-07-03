@@ -1,10 +1,10 @@
 /******************************************************************************************************************************/
-/* include/abls-agent-libs.h   Header parapluie — abls-agent-libs                                                             */
+/* include/mqtt_local.h  Déclaration des prototypes MQTT locaux — abls-agent-libs                                            */
 /* Projet Abls-Habitat                               Gestion d'habitat                                       03.07.2026       */
 /* Auteur: LEFEVRE Sebastien                                                                                                  */
 /******************************************************************************************************************************/
 /*
- * abls-agent-libs.h
+ * mqtt_local.h
  * This file is part of Abls-Habitat
  *
  * Copyright (C) 1988-2026 - Sebastien LEFEVRE
@@ -25,15 +25,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef _ABLS_AGENT_LIBS_H_
- #define _ABLS_AGENT_LIBS_H_
+#ifndef _ABLS_AGENT_LIBS_MQTT_LOCAL_H_
+ #define _ABLS_AGENT_LIBS_MQTT_LOCAL_H_
 
- #include <abls-libs/abls-libs.h>
+ #include <glib.h>
+ #include <json-glib/json-glib.h>
 
  #include "agent.h"
- #include "http.h"
- #include "mqtt_local.h"
- #include "mnemonique.h"
 
-#endif /* _ABLS_AGENT_LIBS_H_ */
+ extern void Mqtt_Send_AI       ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range );
+ extern void Mqtt_Send_DI       ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat );
+ extern void Mqtt_Send_DI_pulse ( struct ABLS_AGENT *agent, gchar *tech_id, gchar *acronyme );
+ extern void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *thread_ci );
+ extern void Mqtt_Send_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gint consigne );
+
+#endif /* _ABLS_AGENT_LIBS_MQTT_LOCAL_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

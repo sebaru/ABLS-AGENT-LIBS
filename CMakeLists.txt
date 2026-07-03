@@ -39,13 +39,14 @@ pkg_check_modules(ABLS_LIBS REQUIRED abls-libs)
 add_library(abls-agent-libs SHARED
   src/agent.c
   src/http.c
+  src/mqtt_local.c
   src/mnemonique.c
 )
 
 set_target_properties(abls-agent-libs PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
-  PUBLIC_HEADER "include/abls-agent-libs.h;include/agent.h;include/http.h;include/mnemonique.h"
+  PUBLIC_HEADER "include/abls-agent-libs.h;include/agent.h;include/http.h;include/mqtt_local.h;include/mnemonique.h"
 )
 
 target_include_directories(abls-agent-libs

@@ -28,6 +28,7 @@
  #define _GNU_SOURCE
  #include <sys/stat.h>
  #include <sys/prctl.h>
+ #include <sys/resource.h>
  #include <unistd.h>
  #include <stdlib.h>
  #include <locale.h>
@@ -43,8 +44,7 @@
  void Agent_send_comm_to_master ( struct ABLS_AGENT *agent, gboolean etat )
   { if (agent->comm_status != etat || agent->comm_next_update <= time(NULL))
      { if (agent->mqtt_local == NULL) return;                                              /* Si pas de connexion, on return; */
-#warning todo
-/*       MQTT_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );*/
+       Mqtt_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );
 
        JsonNode *RootNode = Json_create();
        Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
@@ -52,8 +52,7 @@
        Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
        Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
        Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-#warning todo
-/*       MQTT_Send_to_API ( RootNode, "HEARTBEAT" );*/
+       Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "HEARTBEAT" );
        Json_unref ( RootNode );
 
        agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
@@ -80,10 +79,11 @@
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
-     {
-      #warning todo
-
-/*      MQTT_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );*/
+     { struct rusage conso;
+       getrusage ( RUSAGE_SELF, &conso );
+       Mqtt_Send_AI ( agent, agent->ai_max_rss, (gdouble)conso.ru_maxrss, TRUE );
+       Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
+       Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        agent->telemetrie_next_update = time(NULL) + 60;
      }
   }
@@ -221,6 +221,9 @@
     Json_add_array ( agent->IOs, "IOs" );
 
     agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
+    agent->ai_max_rss          = Mnemo_create_AI ( agent, "MAX_RSS", "Maximum RSS", "kB", AGENT_ARCHIVE_5_MIN );
+    agent->ai_log_par_min      = Mnemo_create_AI ( agent, "LOG_PAR_MIN", "Logs par minute", "logs/min", AGENT_ARCHIVE_1_MIN );
+
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is UP" );
     return ( agent );
