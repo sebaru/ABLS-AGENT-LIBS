@@ -44,7 +44,8 @@
  void Agent_send_comm_to_master ( struct ABLS_AGENT *agent, gboolean etat )
   { if (agent->comm_status != etat || agent->comm_next_update <= time(NULL))
      { if (agent->mqtt_local == NULL) return;                                              /* Si pas de connexion, on return; */
-       MQTT_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );
+#warning todo
+/*       MQTT_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );*/
 
        JsonNode *RootNode = Json_create();
        Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
@@ -52,7 +53,8 @@
        Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
        Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
        Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-       MQTT_Send_to_API ( RootNode, "HEARTBEAT" );
+#warning todo
+/*       MQTT_Send_to_API ( RootNode, "HEARTBEAT" );*/
        Json_unref ( RootNode );
 
        agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
@@ -79,7 +81,10 @@
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
-     { MQTT_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
+     {
+      #warning todo
+
+/*      MQTT_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );*/
        agent->telemetrie_next_update = time(NULL) + 60;
      }
   }
@@ -154,7 +159,7 @@
         }
      }
 /*----------------------------------------- Connexion API pour récupérer la config distante ----------------------------------*/
-    agent->api_config = Http_Get_from_global_API ( "/run/agent/config", "agent_tech_id=%s", agent->agent_tech_id );
+    agent->api_config = Http_Get_from_global_API ( agent, "/run/agent/config", "agent_tech_id=%s", agent->agent_tech_id );
     if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
      { agent->Agent_run = TRUE;
      }
@@ -204,8 +209,9 @@
        gchar package[128];
        g_snprintf ( package, sizeof(package), "Agent_%s", agent->agent_classe );
        Json_add_string ( PluginNode, "package", package );
-       if (Dls_auto_create_plugin( PluginNode ) == FALSE)
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", name ); }
+#warning todo
+/*       if (Dls_auto_create_plugin( PluginNode ) == FALSE)
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", name ); }*/
        Json_unref ( PluginNode );
      }
     else Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error while creating DLS pluginNode" );

@@ -28,6 +28,8 @@
  #include <glib.h>
  #include <stdio.h>
  #include <curl/curl.h>
+ #include <openssl/evp.h>
+ #include <glib.h>
 
  #include "abls-agent-libs.h"
 
@@ -101,7 +103,7 @@
 
 /*---------------------------------------------- Calcul de la signature ------------------------------------------------------*/
     unsigned char hash_bin[EVP_MAX_MD_SIZE];
-    gint md_len;
+    guint md_len;
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();                                                                   /* Calcul du SHA1 */
     EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
     EVP_DigestUpdate(mdctx, agent->domain_uuid,   strlen(agent->domain_uuid));
@@ -111,7 +113,7 @@
     EVP_DigestUpdate(mdctx, timestamp,            strlen(timestamp));
     EVP_DigestFinal_ex(mdctx, hash_bin, &md_len);
     EVP_MD_CTX_free(mdctx);
-    gchar signature[64];
+    guchar signature[64];
     EVP_EncodeBlock( signature, hash_bin, 32 );                                 /* Encodage et signature 256 bits -> 32 bytes */
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-SIGNATURE: %s", signature );
@@ -127,6 +129,10 @@
 /******************************************************************************************************************************/
  static JsonNode *Http_Query ( struct ABLS_AGENT *agent, CURL *curl )
   { JsonNode *ReponseNode = NULL;
+    gint http_code;
+
+    char *url = NULL;                                                                      /* Récupération de l'URL effective */
+    curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
     if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Malloc buffer failed", url ); goto end; }
@@ -164,10 +170,8 @@ end:
 /* Sortie: la reponse json                                                                                                    */
 /******************************************************************************************************************************/
  JsonNode *Http_Post_to_global_API ( struct ABLS_AGENT *agent, gchar *uri, JsonNode *json_payload )
-  { struct curl_slist *all_headers = NULL;                                                        /* Gestion des headers HTTP */
-    JsonNode *ReponseNode = NULL;
+  { JsonNode *ReponseNode = NULL;
     gchar *payload = NULL;
-    gint http_code = 0;                                                                                     /* Code de retour */
 
     gchar url[256];
     if (uri) g_snprintf( url, sizeof(url), "https://%s%s", agent->api_url, uri );
@@ -193,7 +197,7 @@ end:
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
     Http_Add_signature ( agent, curl, payload );                                        /* Ajoute les headers et la signature */
-    JsonNode *ReponseNode = Http_Query ( agent, curl );                                                 /* Réalise la requete */
+    ReponseNode = Http_Query ( agent, curl );                                                           /* Réalise la requete */
 
 end:
     if (payload) g_free(payload);                                                                /* free the "string" payload */
@@ -230,9 +234,9 @@ end:
        va_start( ap, format );
        g_vsnprintf ( parametres, sizeof(parametres), format, ap );
        va_end ( ap );
-       g_snprintf( url, sizeof(url), "https://%s/%s?%s", Json_get_string ( Config.config, "api_url"), URI, parametres );
+       g_snprintf( url, sizeof(url), "https://%s/%s?%s", agent->api_url, URI, parametres );
      }
-    else g_snprintf( url, sizeof(url), "https://%s/%s", Json_get_string ( Config.config, "api_url"), URI );
+    else g_snprintf( url, sizeof(url), "https://%s/%s", agent->api_url, URI );
 
 /*------------------------------------------------ Init du cURL --------------------------------------------------------------*/
     CURL *curl = curl_easy_init();
@@ -242,7 +246,7 @@ end:
     curl_easy_setopt( curl, CURLOPT_URL, url );
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
-    Http_Add_signature ( agent, curl, payload );                                        /* Ajoute les headers et la signature */
+    Http_Add_signature ( agent, curl, NULL );                                           /* Ajoute les headers et la signature */
     JsonNode *ReponseNode = Http_Query ( agent, curl );                                                 /* Réalise la requete */
     if (!ReponseNode) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Error with Http_Get %s", url ); goto end; }
     gint http_code = Json_get_int ( ReponseNode, "http_code" );

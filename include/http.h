@@ -29,6 +29,7 @@
  #define _ABLS_AGENT_LIBS_HTTP_H_
 
  #include <glib.h>
+ #include <glib/gstdio.h>
  #include <json-glib/json-glib.h>
 
  struct ABLS_AGENT;
