@@ -34,7 +34,7 @@
  #include <locale.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
- #include "abls_agent_libs.h"
+ #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
 /* Agent_send_comm_to_master: Envoi le statut de la comm au master                                                            */
@@ -68,7 +68,7 @@
   { Agent_send_comm_to_master ( agent, agent->comm_status );
 
 /********************************************************* tour par secondes **************************************************/
-    if ( agent->nbr_tour_next_update <= time(NULL))                                                 /* Toutes les 1 secondes */
+    if ( agent->nbr_tour_next_update <= time(NULL))                                                  /* Toutes les 1 secondes */
      { agent->nbr_tour_par_sec = agent->nbr_tour;
        agent->nbr_tour = 0;
        if(agent->nbr_tour_par_sec > 50) agent->nbr_tour_delai += 50;
@@ -78,7 +78,7 @@
     usleep(agent->nbr_tour_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
-    if (agent->telemetrie_next_update <= time(NULL))                                                   /* Toutes les minutes */
+    if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
      { MQTT_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
        agent->telemetrie_next_update = time(NULL) + 60;
      }
