@@ -16,7 +16,7 @@ if [ "$SOCLE" = "fedora" ]
 	curl -fsSL https://pkgs.abls-habitat.fr/abls-rpms.repo -o /etc/yum.repos.d/abls-rpms.repo
 
 	echo "Installing RPM-based dependencies"
-	dnf install -y abls-libs-devel cmake gcc pkg-config glib2-devel abls-libs-devel
+	dnf install -y git cmake gcc pkg-config rpm-build rpm-sign glib2-devel json-glib-devel abls-libs-devel
 fi
 
 if [ "$SOCLE" = "debian" ] || [ "$SOCLE" = "raspbian" ] || [ "$SOCLE" = "ubuntu" ]
@@ -26,5 +26,7 @@ if [ "$SOCLE" = "debian" ] || [ "$SOCLE" = "raspbian" ] || [ "$SOCLE" = "ubuntu"
 	curl -fsSL https://pkgs.abls-habitat.fr/abls-deb.sources -o /etc/apt/sources.list.d/abls-pkgs.sources
 
 	apt update -y
-	apt install -y abls-libs-dev cmake gcc pkg-config libglib2.0-dev
+	echo "Installing Debian-based dependencies"
+	apt install -y git cmake gcc pkg-config fakeroot dpkg-dev debhelper lintian
+	apt install -y abls-libs-dev libglib2.0-dev libjson-glib-dev
 fi

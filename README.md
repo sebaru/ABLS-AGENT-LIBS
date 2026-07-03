@@ -29,11 +29,35 @@ cd build
 ctest --output-on-failure
 ```
 
-## RPM
+## Packaging RPM
 
 ```sh
-cd build
-cpack -G RPM
+./build_rpm.sh
 ```
 
-Produces runtime and devel RPM packages.
+Produces runtime and devel RPM packages in `build/`.
+
+## Packaging DEB
+
+```sh
+./build_apt.sh --dist bookworm --no-sign
+./build_apt.sh --dist trixie --no-sign
+```
+
+Produces runtime and dev DEB packages and copies normalized artifacts to:
+
+- `build/deb/<suite>/<arch>/`
+
+## Release bump + publication
+
+```sh
+./bump.sh 1.2.3
+```
+
+The release flow:
+
+- tags `v1.2.3` from `trunk`
+- merges `trunk` into `main`
+- builds RPM + DEB packages
+- copies RPM to `../ABLS-PKGS/public/rpms/<arch>/`
+- copies DEB to `../ABLS-PKGS/deb-packages/<suite>/`

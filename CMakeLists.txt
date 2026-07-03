@@ -93,8 +93,9 @@ set(CPACK_PACKAGE_CONTACT "sebastien.lefevre@abls-habitat.fr")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
 set(CPACK_PACKAGE_LICENSE "GPLv3")
 
-set(CPACK_GENERATOR "RPM")
+set(CPACK_GENERATOR "RPM;DEB")
 set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL runtime devel)
 
 set(CPACK_RPM_RUNTIME_PACKAGE_NAME "abls-agent-libs")
@@ -107,5 +108,12 @@ set(CPACK_RPM_DEVEL_PACKAGE_NAME "abls-agent-libs-devel")
 set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library (development files)")
 set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "abls-agent-libs = ${PROJECT_VERSION}, glib2-devel, json-glib-devel, abls-libs-devel")
 set(CPACK_RPM_DEVEL_FILE_NAME "abls-agent-libs-devel-${PROJECT_VERSION}-${CPACK_PACKAGE_RELEASE}.rpm")
+
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "abls-agent-libs")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libglib2.0-0, libjson-glib-1.0-0, abls-libs")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_SHLIBDEPS ON)
+
+set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "abls-agent-libs-dev")
+set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "abls-agent-libs, libglib2.0-dev, libjson-glib-dev, abls-libs-dev")
 
 include(CPack)
