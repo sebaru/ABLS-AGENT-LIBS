@@ -199,22 +199,12 @@
     Mqtt_start ( agent->mqtt_local );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
-    JsonNode *PluginNode = Json_create();
-    if (PluginNode)
-     { Json_add_string ( PluginNode, "tech_id", agent->agent_tech_id );
-       Json_add_int    ( PluginNode, "syn_id", 2 );                             /* Raccroché au synoptique Système (pas HOME) */
-       gchar *name = Json_get_string ( agent->api_config, "description" );
-       Json_add_string ( PluginNode, "name", name );
-       Json_add_string ( PluginNode, "shortname", name );
-       gchar package[128];
-       g_snprintf ( package, sizeof(package), "Agent_%s", agent->agent_classe );
-       Json_add_string ( PluginNode, "package", package );
-#warning todo
-/*       if (Dls_auto_create_plugin( PluginNode ) == FALSE)
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", name ); }*/
-       Json_unref ( PluginNode );
-     }
-    else Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error while creating DLS pluginNode" );
+    if (Dls_auto_create_plugin( agent ) == FALSE)
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", agent->agent_tech_id ); }
+
+/* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
+    agent->IOs = Json_create();
+    Json_add_array ( agent->IOs, "IOs" );
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
     agent->IOs = Json_create();

@@ -1,10 +1,10 @@
 /******************************************************************************************************************************/
-/* include/abls-agent-libs.h   Header parapluie — abls-agent-libs                                                             */
+/* include/dls.h       Déclaration des prototypes DLS — abls-agent-libs                                                       */
 /* Projet Abls-Habitat                               Gestion d'habitat                                       03.07.2026       */
 /* Auteur: LEFEVRE Sebastien                                                                                                  */
 /******************************************************************************************************************************/
 /*
- * abls-agent-libs.h
+ * dls.h
  * This file is part of Abls-Habitat
  *
  * Copyright (C) 1988-2026 - Sebastien LEFEVRE
@@ -25,16 +25,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef _ABLS_AGENT_LIBS_H_
- #define _ABLS_AGENT_LIBS_H_
+#ifndef _ABLS_AGENT_LIBS_DLS_H_
+ #define _ABLS_AGENT_LIBS_DLS_H_
 
- #include <abls-libs/abls-libs.h>
-
- #include "agent.h"
- #include "http.h"
- #include "mqtt_local.h"
- #include "mnemonique.h"
  #include "dls.h"
 
-#endif /* _ABLS_AGENT_LIBS_H_ */
+ extern gboolean Dls_auto_create_plugin ( struct ABLS_AGENT *agent );
+
+#endif /* _ABLS_AGENT_LIBS_DLS_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
