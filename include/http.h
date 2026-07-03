@@ -28,11 +28,7 @@
 #ifndef _ABLS_AGENT_LIBS_HTTP_H_
  #define _ABLS_AGENT_LIBS_HTTP_H_
 
- #include <glib.h>
  #include <glib/gstdio.h>
- #include <json-glib/json-glib.h>
-
- struct ABLS_AGENT;
 
  extern void      Http_Init               ( struct ABLS_AGENT *agent );
  extern void      Http_End                ( struct ABLS_AGENT *agent );

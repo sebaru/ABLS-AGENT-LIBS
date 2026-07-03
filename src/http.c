@@ -25,13 +25,12 @@
  * Boston, MA  02110-1301  USA
  */
 
- #include <glib.h>
+
  #include <stdio.h>
  #include <curl/curl.h>
  #include <openssl/evp.h>
- #include <glib.h>
 
- #include "abls-agent-libs.h"
+/**************************************************** Prototypes de fonctions *************************************************/ #include "abls-agent-libs.h"
 
  struct HTTP_BUFFER
   { gchar *body;

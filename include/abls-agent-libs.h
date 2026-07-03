@@ -28,6 +28,8 @@
 #ifndef _ABLS_AGENT_LIBS_H_
  #define _ABLS_AGENT_LIBS_H_
 
+ #include <abls-libs/abls-libs.h>
+
  #include "agent.h"
  #include "http.h"
  #include "mnemonique.h"

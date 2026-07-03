@@ -26,7 +26,6 @@
  */
 
  #define _GNU_SOURCE
- #include <glib.h>
  #include <sys/stat.h>
  #include <sys/prctl.h>
  #include <unistd.h>
@@ -179,9 +178,11 @@
                                  Json_get_int ( agent->api_config, "mqtt_port" ),
                                  Json_get_int ( agent->api_config, "mqtt_qos" )
                                );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/agent/%s/%s", agent->domain_uuid, agent->agent_classe, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/agents/%s", agent->domain_uuid, agent->agent_classe );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/agents", agent->domain_uuid );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/CLASS/%s", agent->domain_uuid, agent->agent_classe );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
+
     Mqtt_start ( agent->mqtt_api );
 
     agent->mqtt_local = Mqtt_init( agent->agent_classe, agent->agent_tech_id, agent->agent_tech_id,
@@ -193,9 +194,8 @@
                                    Json_get_int ( agent->local_config, "mqtt_port" ),
                                    Json_get_int ( agent->local_config, "mqtt_qos" )
                                  );
-    Mqtt_subscribe ( agent->mqtt_local, "agent/%s/%s", agent->agent_classe, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_local, "agents/%s", agent->agent_classe );
-    Mqtt_subscribe ( agent->mqtt_local, "agents" );
+    Mqtt_subscribe ( agent->mqtt_local, "SET_AO/%s/#", agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
     Mqtt_start ( agent->mqtt_local );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
@@ -220,7 +220,7 @@
     agent->IOs = Json_create();
     Json_add_array ( agent->IOs, "IOs" );
 
-    agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "THREAD_TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", ARCHIVE_5_MIN );
+    agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is UP" );
     return ( agent );

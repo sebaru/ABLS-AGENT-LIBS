@@ -28,11 +28,6 @@
 #ifndef _ABLS_AGENT_LIBS_MNEMONIQUE_H_
  #define _ABLS_AGENT_LIBS_MNEMONIQUE_H_
 
- #include <glib.h>
- #include <json-glib/json-glib.h>
-
- struct ABLS_AGENT;
-
  extern JsonNode *Mnemo_create_AI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
  extern JsonNode *Mnemo_create_DI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
  extern JsonNode *Mnemo_create_CI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
