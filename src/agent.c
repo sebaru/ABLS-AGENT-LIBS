@@ -92,7 +92,7 @@
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers la structure initialisée                                                                             */
 /******************************************************************************************************************************/
- struct ABLS_AGENT *Agent_init ( gchar *agent_classe, gint sizeof_vars, int *argc, char ***argv, GOptionEntry *entries )
+ struct ABLS_AGENT *Agent_init ( gchar *agent_classe, gint sizeof_vars, int argc, char **argv )
   { gchar chaine[128];
     Info_init ( "Agent", "agent_tech_id", LOG_INFO );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' is starting", agent_classe );
@@ -114,7 +114,7 @@
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
     Config_apply_FILE ( agent->local_config, ABLS_AGENT_CONFIG_FILE );                               /* Apply file parameters */
-    Config_apply_ARGV ( agent->local_config, argc, argv, entries );                                  /* Apply ARGV parameters */
+    Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
