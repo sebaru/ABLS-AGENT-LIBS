@@ -71,7 +71,8 @@
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
 
- extern struct ABLS_AGENT *Agent_init                 ( gchar *agent_classe, gint sizeof_vars );
+ extern struct ABLS_AGENT *Agent_init                 ( gchar *agent_classe, gint sizeof_vars,
+                                                        int *argc, char ***argv, GOptionEntry *entries );
  extern void               Agent_send_comm_to_master  ( struct ABLS_AGENT *agent, gboolean etat );
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
