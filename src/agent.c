@@ -201,7 +201,7 @@
     Mqtt_start ( agent->mqtt_local );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
-    if (Dls_auto_create_plugin( agent ) == FALSE)
+  if (Dls_create_agent_plugin( agent ) == FALSE)
      { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", agent->agent_tech_id ); }
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
