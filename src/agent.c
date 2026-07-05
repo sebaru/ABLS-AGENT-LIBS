@@ -92,9 +92,9 @@
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers la structure initialisée                                                                             */
 /******************************************************************************************************************************/
- struct ABLS_AGENT *Agent_init ( gchar *agent_classe, gint sizeof_vars, int argc, char **argv )
+ struct ABLS_AGENT *Agent_init ( gchar *entete, gchar *agent_classe, gint sizeof_vars, int argc, char **argv )
   { gchar chaine[128];
-    Info_init ( "Agent", "agent_tech_id", LOG_INFO );
+    Info_init ( entete, "agent_tech_id", LOG_INFO );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' is starting", agent_classe );
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
