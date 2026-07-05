@@ -106,6 +106,9 @@ set(CPACK_RPM_RUNTIME_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library 
 set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "glib2, json-glib, libcurl, abls-libs")
 set(CPACK_RPM_RUNTIME_POST_SCRIPTLET "/sbin/ldconfig")
 set(CPACK_RPM_RUNTIME_FILE_NAME "abls-agent-libs-${PROJECT_VERSION}-${CPACK_PACKAGE_RELEASE}.rpm")
+set(CPACK_RPM_RUNTIME_DEBUGINFO_PACKAGE ON)
+set(CPACK_RPM_RUNTIME_DEBUGINFO_FILE_NAME "RPM-DEFAULT")
+set(CPACK_RPM_RUNTIME_BUILD_SOURCE_DIRS_PREFIX "/usr/src/debug")
 
 set(CPACK_RPM_DEVEL_PACKAGE_NAME "abls-agent-libs-devel")
 set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library (development files)")
