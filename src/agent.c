@@ -114,10 +114,10 @@
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
     Config_apply_FILE ( agent->local_config, ABLS_AGENT_CONFIG_FILE );                               /* Apply file parameters */
-    Config_add_parameter ( "agent_tech_id", "TECH_ID", "Agent tech_id",     FALSE );
-    Config_add_parameter ( "domain_uuid",   "UUID",    "UUID du domaine",   FALSE );
-    Config_add_parameter ( "domain_secret", "SECRET",  "Secret du domaine", FALSE );
-    Config_add_parameter ( "api_url",       "URL",     "URL de l'API",      FALSE );
+    Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
+    Config_add_parameter ( "domain-uuid",   "UUID",    "UUID du domaine",   CONFIG_STRING );
+    Config_add_parameter ( "domain-secret", "SECRET",  "Secret du domaine", CONFIG_STRING );
+    Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
@@ -164,7 +164,9 @@
         }
      }
 /*----------------------------------------- Connexion API pour récupérer la config distante ----------------------------------*/
-    agent->api_config = Http_Get_from_global_API ( agent, "/run/agent/config", "agent_tech_id=%s", agent->agent_tech_id );
+    agent->api_config = Http_Get_from_global_API ( agent, "/run/agent/config",
+                                                   "agent_classe=%s&agent_tech_id=%s",
+                                                   agent->agent_classe, agent->agent_tech_id );
     if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
      { agent->Agent_run = TRUE;
      }
