@@ -33,7 +33,8 @@
 /**************************************************** Prototypes de fonctions *************************************************/ #include "abls-agent-libs.h"
 
  struct HTTP_BUFFER
-  { gchar *body;
+  { struct ABLS_AGENT *agent;
+    gchar *body;
     size_t size;
   };
 
@@ -61,13 +62,13 @@
 /* Entrée: l'agent en cours d'execution, le contenu, la taille, le nombre de bytes, de user data                              */
 /* Sortie: la nouvelle taille                                                                                                 */
 /******************************************************************************************************************************/
- static size_t Http_Write_CB ( struct ABLS_AGENT *agent, void *contents, size_t size, size_t nmemb, void *userp )
+ static size_t Http_Write_CB ( void *contents, size_t size, size_t nmemb, void *userp )
   { struct HTTP_BUFFER *buffer = userp;
     size_t chunksize = size * nmemb;
 
     char *ptr = g_try_realloc( buffer->body, buffer->size + chunksize + 1 );
     if(!ptr)
-     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Realloc failed" ); return(0); }
+     { Info( __func__, "http", buffer->agent->agent_tech_id, LOG_ERR, "Realloc failed" ); return(0); }
 
     buffer->body = ptr;
     memcpy( buffer->body + buffer->size, contents, chunksize );
@@ -132,6 +133,7 @@
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
     if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Malloc buffer failed", url ); goto end; }
+    buffer->agent = agent;
     curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, Http_Write_CB );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, buffer );
 
