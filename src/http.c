@@ -94,7 +94,7 @@
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-DOMAIN: %s", agent->domain_uuid );
     all_headers = curl_slist_append( all_headers, chaine );
 
-    g_snprintf( chaine, sizeof(chaine), "X-ABLS-AGENT-TECH-ID: %s", agent->agent_tech_id );
+    g_snprintf( chaine, sizeof(chaine), "X-ABLS-AGENT: %s", agent->agent_tech_id );
     all_headers = curl_slist_append( all_headers, chaine );
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-TIMESTAMP: %s", timestamp );
@@ -126,12 +126,9 @@
 /* Entrée : l'agent et la structure CURL                                                                                      */
 /* Sortie : le noeud JSON de la réponse                                                                                       */
 /******************************************************************************************************************************/
- static JsonNode *Http_Query ( struct ABLS_AGENT *agent, CURL *curl )
+ static JsonNode *Http_Query ( struct ABLS_AGENT *agent, gchar *url, CURL *curl )
   { JsonNode *ReponseNode = NULL;
     gint http_code;
-
-    char *url = NULL;                                                                      /* Récupération de l'URL effective */
-    curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
     if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Malloc buffer failed", url ); goto end; }
@@ -196,7 +193,7 @@ end:
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
     Http_Add_signature ( agent, curl, payload );                                        /* Ajoute les headers et la signature */
-    ReponseNode = Http_Query ( agent, curl );                                                           /* Réalise la requete */
+    ReponseNode = Http_Query ( agent, url, curl );                                                      /* Réalise la requete */
 
 end:
     if (payload) g_free(payload);                                                                /* free the "string" payload */
@@ -233,9 +230,9 @@ end:
        va_start( ap, format );
        g_vsnprintf ( parametres, sizeof(parametres), format, ap );
        va_end ( ap );
-       g_snprintf( url, sizeof(url), "https://%s/%s?%s", agent->api_url, URI, parametres );
+       g_snprintf( url, sizeof(url), "https://%s%s?%s", agent->api_url, URI, parametres );
      }
-    else g_snprintf( url, sizeof(url), "https://%s/%s", agent->api_url, URI );
+    else g_snprintf( url, sizeof(url), "https://%s%s", agent->api_url, URI );
 
 /*------------------------------------------------ Init du cURL --------------------------------------------------------------*/
     CURL *curl = curl_easy_init();
@@ -246,7 +243,7 @@ end:
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
     Http_Add_signature ( agent, curl, NULL );                                           /* Ajoute les headers et la signature */
-    JsonNode *ReponseNode = Http_Query ( agent, curl );                                                 /* Réalise la requete */
+    JsonNode *ReponseNode = Http_Query ( agent, url, curl );                                            /* Réalise la requete */
     if (!ReponseNode) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Error with Http_Get %s", url ); goto end; }
     gint http_code = Json_get_int ( ReponseNode, "http_code" );
     Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "%s Status %d for '%s'", URI, http_code, url );

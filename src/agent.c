@@ -141,8 +141,8 @@
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
+    agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
-    agent->agent_classe  = Json_get_string ( agent->local_config, "agent_classe" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
