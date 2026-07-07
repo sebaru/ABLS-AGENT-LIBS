@@ -52,6 +52,7 @@
     JsonNode *api_config;                                                           /* Pointeur vers la config API de l'agent */
     gchar *agent_tech_id;                                                                 /* Identifiant technique de l'agent */
     gchar *agent_classe;                                                                                 /* Classe de l'agent */
+    gchar *server_uuid;                                                                                    /* UUID du serveur */
     gchar *domain_uuid;                                                                                    /* UUID du domaine */
     gchar *domain_secret;                                                                                /* Secret du domaine */
     gchar *api_url;                                                                                           /* URL de l'API */

@@ -95,6 +95,9 @@
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-DOMAIN: %s", agent->domain_uuid );
     all_headers = curl_slist_append( all_headers, chaine );
 
+    g_snprintf( chaine, sizeof(chaine), "X-ABLS-SERVER: %s", agent->server_uuid );
+    all_headers = curl_slist_append( all_headers, chaine );
+
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-AGENT: %s", agent->agent_tech_id );
     all_headers = curl_slist_append( all_headers, chaine );
 
@@ -107,6 +110,7 @@
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();                                                                   /* Calcul du SHA1 */
     EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
     EVP_DigestUpdate(mdctx, agent->domain_uuid,   strlen(agent->domain_uuid));
+    EVP_DigestUpdate(mdctx, agent->server_uuid,   strlen(agent->server_uuid));
     EVP_DigestUpdate(mdctx, agent->agent_tech_id, strlen(agent->agent_tech_id));
     EVP_DigestUpdate(mdctx, agent->domain_secret, strlen(agent->domain_secret));
     if (payload) EVP_DigestUpdate(mdctx, payload, strlen(payload));

@@ -114,9 +114,10 @@
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
     Config_apply_FILE ( agent->local_config, ABLS_AGENT_CONFIG_FILE );                               /* Apply file parameters */
-    Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "domain-uuid",   "UUID",    "UUID du domaine",   CONFIG_STRING );
     Config_add_parameter ( "domain-secret", "SECRET",  "Secret du domaine", CONFIG_STRING );
+    Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
+    Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
@@ -128,6 +129,11 @@
 
     if (!Json_has_member( agent->local_config, "api_url" ))
      { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'api_url', in config, exiting." );
+       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+     }
+
+    if (!Json_has_member( agent->local_config, "server_uuid" ))
+     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'server_uuid', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
@@ -144,6 +150,7 @@
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
+    agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     Json_to_log ( agent->agent_classe, agent->agent_tech_id, agent->local_config );                           /* Print config */
