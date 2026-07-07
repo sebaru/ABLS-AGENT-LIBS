@@ -95,7 +95,7 @@
  struct ABLS_AGENT *Agent_init ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars, int argc, char **argv )
   { gchar chaine[128];
     Info_init ( entete, "agent_tech_id", LOG_INFO );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (v%s) is starting with agent_libs v%s",
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with agent_libs version %s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
