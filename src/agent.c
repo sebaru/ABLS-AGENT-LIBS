@@ -92,10 +92,11 @@
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers la structure initialisée                                                                             */
 /******************************************************************************************************************************/
- struct ABLS_AGENT *Agent_init ( gchar *entete, gchar *agent_classe, gint sizeof_vars, int argc, char **argv )
+ struct ABLS_AGENT *Agent_init ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars, int argc, char **argv )
   { gchar chaine[128];
     Info_init ( entete, "agent_tech_id", LOG_INFO );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' is starting", agent_classe );
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (v%s) is starting with agent_libs v%s",
+          agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
@@ -171,14 +172,29 @@
         }
      }
 /*----------------------------------------- Connexion API pour récupérer la config distante ----------------------------------*/
-    agent->api_config = Http_Get_from_global_API ( agent, "/run/agent/config",
-                                                   "agent_classe=%s&agent_tech_id=%s",
-                                                   agent->agent_classe, agent->agent_tech_id );
-    if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
-     { agent->Agent_run = TRUE;
+    JsonNode *RootNode = Json_create();
+    if (RootNode)
+     { Json_add_string ( RootNode, "agent_classe",   agent->agent_classe );
+       Json_add_string ( RootNode, "agent_tech_id",  agent->agent_tech_id );
+       Json_add_string ( RootNode, "version",        agent_version );
+       Json_add_int    ( RootNode, "start_time",     time(NULL) );
+       agent->api_config = Http_Post_to_global_API ( agent, "/run/agent/config", RootNode );
+       Json_unref ( RootNode );
      }
     else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "GET_CONFIG from API Failed. Unloading." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error for POST_CONFIG, exiting." );
+       Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
+     }
+
+    if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
+     { agent->Agent_run = TRUE; }
+    else
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "POST_CONFIG from API Failed. Unloading." );
+       Agent_end ( agent );
+     }
+
+    if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Agent disabled in API config. Unloading." );
        Agent_end ( agent );
      }
 

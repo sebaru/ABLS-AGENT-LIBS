@@ -67,6 +67,10 @@ target_compile_options(abls-agent-libs PRIVATE
   -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -pipe -g -ggdb
 )
 
+target_compile_definitions(abls-agent-libs PRIVATE
+  ABLS_AGENT_LIBS_VERSION="${ABLS_AGENT_LIBS_VERSION}"
+)
+
 target_link_libraries(abls-agent-libs PRIVATE
   ${GLIB_LIBRARIES}
   ${GTHREAD_LIBRARIES}
