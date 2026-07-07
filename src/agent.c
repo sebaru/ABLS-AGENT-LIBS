@@ -154,7 +154,7 @@
     agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
-    Json_to_log ( agent->agent_classe, agent->agent_tech_id, agent->local_config );                           /* Print config */
+    Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
 /*------------------------------------------------- Init ---------------------------------------------------------------------*/
     g_snprintf( chaine, sizeof(chaine), "W-%s", agent->agent_tech_id );                            /* Positionne le nom noyau */
@@ -197,10 +197,10 @@
      { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Agent disabled in API config. Unloading." );
        Agent_end ( agent );
      }
-
+    Json_to_log ( "api_config", agent->agent_tech_id, agent->api_config );                                    /* Print config */
 
 /*------------------------------------------------------ Ecoute du MQTT ------------------------------------------------------*/
-    agent->mqtt_api = Mqtt_init( agent->agent_classe, agent->agent_tech_id, agent->agent_tech_id,
+    agent->mqtt_api = Mqtt_init( "mqtt_api", agent->agent_tech_id, agent->agent_tech_id,
                                  Json_get_bool ( agent->api_config, "mqtt_over_ssl" ),
                                  Json_get_string ( agent->local_config, "mqtt_ca_file" ),
                                  Json_get_string ( agent->local_config, "mqtt_ca_path" ),
@@ -216,7 +216,7 @@
 
     Mqtt_start ( agent->mqtt_api );
 
-    agent->mqtt_local = Mqtt_init( agent->agent_classe, agent->agent_tech_id, agent->agent_tech_id,
+    agent->mqtt_local = Mqtt_init( "mqtt_local", agent->agent_tech_id, agent->agent_tech_id,
                                    Json_get_bool ( agent->local_config, "mqtt_over_ssl" ),
                                    Json_get_string ( agent->local_config, "mqtt_ca_file" ),
                                    Json_get_string ( agent->local_config, "mqtt_ca_path" ),
