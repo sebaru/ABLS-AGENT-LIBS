@@ -201,7 +201,7 @@
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
     Json_add_string ( node, "libelle", libelle );
-    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/thread/add/watchdog", node );
+    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/watchdog", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add WATCHDOG %s to API", agent_acronyme ); }
     Json_unref ( api_result );

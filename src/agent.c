@@ -200,11 +200,13 @@
     Json_to_log ( "api_config", agent->agent_tech_id, agent->api_config );                                    /* Print config */
 
 /*------------------------------------------------------ Ecoute du MQTT ------------------------------------------------------*/
+    gchar mqtt_username[64];
+    g_snprintf ( mqtt_username, sizeof(mqtt_username), "%s-agent", agent->domain_uuid );
     agent->mqtt_api = Mqtt_init( "mqtt_api", agent->agent_tech_id, agent->agent_tech_id,
                                  Json_get_bool ( agent->api_config, "mqtt_over_ssl" ),
                                  Json_get_string ( agent->local_config, "mqtt_ca_file" ),
                                  Json_get_string ( agent->local_config, "mqtt_ca_path" ),
-                                 agent->agent_tech_id, Json_get_string ( agent->api_config, "mqtt_password" ),
+                                 mqtt_username, Json_get_string ( agent->api_config, "mqtt_password" ),
                                  Json_get_string ( agent->api_config, "mqtt_hostname" ),
                                  Json_get_int ( agent->api_config, "mqtt_port" ),
                                  Json_get_int ( agent->api_config, "mqtt_qos" )
@@ -220,10 +222,10 @@
                                    Json_get_bool ( agent->local_config, "mqtt_over_ssl" ),
                                    Json_get_string ( agent->local_config, "mqtt_ca_file" ),
                                    Json_get_string ( agent->local_config, "mqtt_ca_path" ),
-                                   agent->agent_tech_id, Json_get_string ( agent->local_config, "mqtt_password" ),
-                                   Json_get_string ( agent->local_config, "mqtt_hostname" ),
-                                   Json_get_int ( agent->local_config, "mqtt_port" ),
-                                   Json_get_int ( agent->local_config, "mqtt_qos" )
+                                   NULL, NULL, /* username/password */
+                                   Json_get_string ( agent->api_config, "master_hostname" ),
+                                   1883,
+                                   1 /* "mqtt_qos */
                                  );
     Mqtt_subscribe ( agent->mqtt_local, "SET_AO/%s/#", agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
