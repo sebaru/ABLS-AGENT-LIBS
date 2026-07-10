@@ -257,9 +257,10 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
-  { Agent_send_comm_to_master ( agent, FALSE );
-    Mqtt_stop ( agent->mqtt_local );
+  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
+    Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
+    Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
