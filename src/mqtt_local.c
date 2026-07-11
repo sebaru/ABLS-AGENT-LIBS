@@ -45,7 +45,7 @@
        Json_add_bool( agent_ai, "need_sync", FALSE );
        gchar *agent_tech_id = Json_get_string ( agent_ai, "agent_tech_id" );
        gchar *agent_acronyme = Json_get_string ( agent_ai, "agent_acronyme" );
-       Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %f (in_range=%d)", agent_tech_id, agent_acronyme, valeur, in_range );
+       Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %f (in_range=%d)", agent_tech_id, agent_acronyme, valeur, in_range );
        JsonNode *RootNode = Json_create();
        if (!RootNode) return;
        Json_add_double( RootNode, "valeur", valeur );
@@ -69,7 +69,7 @@
        Json_add_bool( agent_di, "need_sync", FALSE );
        gchar *agent_tech_id = Json_get_string ( agent_di, "agent_tech_id" );
        gchar *agent_acronyme = Json_get_string ( agent_di, "agent_acronyme" );
-       Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent_tech_id, agent_acronyme, etat );
+       Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent_tech_id, agent_acronyme, etat );
        JsonNode *RootNode = Json_create();
        if (!RootNode) return;
        Json_add_bool( RootNode, "etat", etat );
@@ -87,7 +87,7 @@
     JsonNode *thread_di = Json_create();
     if (!thread_di) return;
     Json_add_string( thread_di, "from_thread_tech_id", agent->agent_tech_id );
-    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
     Mqtt_send_message ( agent->mqtt_local, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
     Json_unref( thread_di );
   }
@@ -99,7 +99,7 @@
  void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *thread_ci )
   { if (! (agent && thread_ci)) return;
     gchar *thread_acronyme = Json_get_string ( thread_ci, "thread_acronyme" );
-    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", agent->agent_tech_id, thread_acronyme );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", agent->agent_tech_id, thread_acronyme );
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
     Json_add_string( RootNode, "from_thread_tech_id", agent->agent_tech_id );
@@ -117,7 +117,7 @@
     if(!agent_watchdog) return;
     Json_add_int( agent_watchdog, "consigne", consigne );
 
-    Info( __func__, "mqtt", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent->agent_tech_id, agent_acronyme, consigne );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent->agent_tech_id, agent_acronyme, consigne );
     Mqtt_send_message ( agent->mqtt_local, agent_watchdog, TRUE, "SET_WATCHDOG/%s/%s", agent->agent_tech_id, agent_acronyme );
     Json_unref( agent_watchdog );
   }

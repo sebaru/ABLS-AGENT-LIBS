@@ -32,12 +32,14 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GTHREAD REQUIRED gthread-2.0)
 pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)
+pkg_check_modules(CURL REQUIRED libcurl)
 pkg_check_modules(ABLS_LIBS REQUIRED abls-libs)
 
   set(CMAKE_REQUIRED_INCLUDES ${ABLS_LIBS_INCLUDE_DIRS})
 
 add_library(abls-agent-libs SHARED
   src/agent.c
+  src/signal.c
   src/http.c
   src/mqtt_local.c
   src/mnemonique.c
@@ -58,6 +60,7 @@ target_include_directories(abls-agent-libs
     ${GLIB_INCLUDE_DIRS}
     ${GTHREAD_INCLUDE_DIRS}
     ${JSON_GLIB_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIRS}
     ${ABLS_LIBS_INCLUDE_DIRS}
 )
 
@@ -65,10 +68,15 @@ target_compile_options(abls-agent-libs PRIVATE
   -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -pipe -g -ggdb
 )
 
+target_compile_definitions(abls-agent-libs PRIVATE
+  ABLS_AGENT_LIBS_VERSION="${ABLS_AGENT_LIBS_VERSION}"
+)
+
 target_link_libraries(abls-agent-libs PRIVATE
   ${GLIB_LIBRARIES}
   ${GTHREAD_LIBRARIES}
   ${JSON_GLIB_LIBRARIES}
+  ${CURL_LIBRARIES}
   ${ABLS_LIBS_LIBRARIES}
 )
 
@@ -100,20 +108,23 @@ set(CPACK_COMPONENTS_ALL runtime devel)
 
 set(CPACK_RPM_RUNTIME_PACKAGE_NAME "abls-agent-libs")
 set(CPACK_RPM_RUNTIME_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library (runtime)")
-set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "glib2, json-glib, abls-libs")
+set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "glib2, json-glib, libcurl, abls-libs")
 set(CPACK_RPM_RUNTIME_POST_SCRIPTLET "/sbin/ldconfig")
 set(CPACK_RPM_RUNTIME_FILE_NAME "abls-agent-libs-${PROJECT_VERSION}-${CPACK_PACKAGE_RELEASE}.rpm")
+set(CPACK_RPM_RUNTIME_DEBUGINFO_PACKAGE ON)
+set(CPACK_RPM_RUNTIME_DEBUGINFO_FILE_NAME "RPM-DEFAULT")
+set(CPACK_RPM_RUNTIME_BUILD_SOURCE_DIRS_PREFIX "/usr/src/debug")
 
 set(CPACK_RPM_DEVEL_PACKAGE_NAME "abls-agent-libs-devel")
 set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library (development files)")
-set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "abls-agent-libs = ${PROJECT_VERSION}, glib2-devel, json-glib-devel, abls-libs-devel")
+set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "abls-agent-libs = ${PROJECT_VERSION}, glib2-devel, json-glib-devel, libcurl-devel, abls-libs-devel")
 set(CPACK_RPM_DEVEL_FILE_NAME "abls-agent-libs-devel-${PROJECT_VERSION}-${CPACK_PACKAGE_RELEASE}.rpm")
 
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "abls-agent-libs")
-set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libglib2.0-0, libjson-glib-1.0-0, abls-libs")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libglib2.0-0, libjson-glib-1.0-0, libcurl4, abls-libs")
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_SHLIBDEPS ON)
 
 set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "abls-agent-libs-dev")
-set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "abls-agent-libs, libglib2.0-dev, libjson-glib-dev, abls-libs-dev")
+set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "abls-agent-libs, libglib2.0-dev, libjson-glib-dev, libcurl4-openssl-dev, abls-libs-dev")
 
 include(CPack)

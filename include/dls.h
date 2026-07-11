@@ -28,9 +28,9 @@
 #ifndef _ABLS_AGENT_LIBS_DLS_H_
  #define _ABLS_AGENT_LIBS_DLS_H_
 
- #include "dls.h"
+ #include "agent.h"
 
- extern gboolean Dls_auto_create_plugin ( struct ABLS_AGENT *agent );
+ extern gboolean Dls_create_agent_plugin ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_DLS_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
