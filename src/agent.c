@@ -134,14 +134,14 @@
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "Memory error trying to malloc struct ABLS_AGENT" );
+     { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
     Agent_enable_signals ( agent );
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
     if (!agent->local_config)
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "Memory error trying to malloc local config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc local config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
     Json_add_int ( agent->local_config, "log_level", LOG_INFO );
@@ -158,27 +158,27 @@
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'agent_tech_id', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "api_url" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'api_url', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "server_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'server_uuid', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "domain_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'domain_uuid', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "domain_secret" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'domain_secret', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
@@ -202,7 +202,7 @@
     if (sizeof_vars)
      { agent->vars = g_try_malloc0 ( sizeof_vars );
        if (!agent->vars)
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error for vars, exiting." );
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for vars, exiting." );
           Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
         }
      }
@@ -217,19 +217,21 @@
        Json_unref ( RootNode );
      }
     else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error for POST_CONFIG, exiting." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for POST_CONFIG, exiting." );
        Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
-     { agent->Agent_run = TRUE; }
+     { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) );
+       agent->Agent_run = TRUE;
+     }
     else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "POST_CONFIG from API Failed. Unloading." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
        Agent_end ( agent );
      }
 
     if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Agent disabled in API config. Unloading." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "Agent disabled in API config. Unloading." );
        Agent_end ( agent );
      }
 
