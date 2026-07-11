@@ -196,7 +196,8 @@
     prctl(PR_SET_NAME, upper_name, 0, 0, 0 );
     g_free(upper_name);
 
-    mkdir ( agent->agent_classe, S_IRUSR | S_IWUSR | S_IXUSR );
+#warning need Drop_priv
+/*    mkdir ( agent->agent_classe, S_IRUSR | S_IWUSR | S_IXUSR );*/
 
     if (sizeof_vars)
      { agent->vars = g_try_malloc0 ( sizeof_vars );
