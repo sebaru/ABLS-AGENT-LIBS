@@ -39,6 +39,7 @@ pkg_check_modules(ABLS_LIBS REQUIRED abls-libs)
 
 add_library(abls-agent-libs SHARED
   src/agent.c
+  src/signal.c
   src/http.c
   src/mqtt_local.c
   src/mnemonique.c

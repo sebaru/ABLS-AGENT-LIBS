@@ -137,7 +137,7 @@
      { Info( __func__, agent_classe, NULL, LOG_ERR, "Memory error trying to malloc struct ABLS_AGENT" );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
-
+    Agent_enable_signals ( agent );
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
     if (!agent->local_config)
@@ -297,12 +297,14 @@
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
   { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
+    Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
+    g_free(agent);
     sleep(1);
     exit(0);
   }
