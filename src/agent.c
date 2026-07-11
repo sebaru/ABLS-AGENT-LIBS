@@ -86,6 +86,30 @@
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        agent->telemetrie_next_update = time(NULL) + 60;
      }
+/******************************************************** Ecoute API **********************************************************/
+    JsonNode *api_message = Mqtt_get_message ( agent->mqtt_api );
+    if (api_message)
+     { if ( Mqtt_topic_is ( api_message, 4, "+", "STOP", "AGENT", agent->agent_tech_id ) )
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping by API request" );
+          agent->Agent_run = FALSE;
+        }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "AGENT", agent->agent_tech_id )
+              || Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "CLASS", agent->agent_classe ) )
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is upgrading by API request" );
+          gint new_pid = fork();
+          if (new_pid<0)
+           { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: Fork Error" ); }
+          else if (!new_pid)
+           { gchar chaine[256];
+             g_snprintf ( chaine, sizeof(chaine), "sudo dnf upgrade abls-agent-%s", agent->agent_classe );
+             system(chaine);
+             Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: done. Restarting." );
+             agent->Agent_run = FALSE;                                                                  /* Stop old processes */
+             exit(0);
+           }
+        }
+       Json_unref ( api_message );
+     }
   }
 /******************************************************************************************************************************/
 /* Agent_init: appelé par chaque agent, lors de son démarrage                                                                 */
@@ -213,6 +237,7 @@
                                );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/CLASS/%s", agent->domain_uuid, agent->agent_classe );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/STOP/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
 
