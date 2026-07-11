@@ -108,6 +108,16 @@
              exit(0);
            }
         }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "LOG", "AGENT", agent->agent_tech_id ) )
+        { if ( Json_has_member ( api_message, "debug" ) )
+           { gchar *facility = Json_get_string ( api_message, "debug" );
+             if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
+           }
+          else if ( Json_has_member ( api_message, "undebug" ) )
+           { gchar *facility = Json_get_string ( api_message, "undebug" );
+             if (facility) Info_undebug_facility ( agent->agent_tech_id, facility );
+           }
+        }
        Json_unref ( api_message );
      }
   }
@@ -221,6 +231,10 @@
      { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Agent disabled in API config. Unloading." );
        Agent_end ( agent );
      }
+
+    if (Json_has_member ( agent->api_config, "log_facilities" ))
+     { Info_set_facilities ( agent->agent_tech_id, agent->api_config, "log_facilities" ); }
+
     Json_to_log ( "api_config", agent->agent_tech_id, agent->api_config );                                    /* Print config */
 
 /*------------------------------------------------------ Ecoute du MQTT ------------------------------------------------------*/
@@ -240,7 +254,7 @@
     Mqtt_subscribe ( agent->mqtt_api, "%s/STOP/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
-
+    Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_start ( agent->mqtt_api );
 
     agent->mqtt_local = Mqtt_init( "mqtt_local", agent->agent_tech_id, agent->agent_tech_id,
