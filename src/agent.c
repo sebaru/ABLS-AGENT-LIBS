@@ -109,7 +109,11 @@
            }
         }
        else if ( Mqtt_topic_is ( api_message, 4, "+", "LOG", "AGENT", agent->agent_tech_id ) )
-        { if ( Json_has_member ( api_message, "debug" ) )
+        { if ( Json_has_member ( api_message, "log_level" ) )
+           { gint log_level = Json_get_int ( api_message, "log_level" );
+             Info_change_log_level ( log_level );
+           }
+          else if ( Json_has_member ( api_message, "debug" ) )
            { gchar *facility = Json_get_string ( api_message, "debug" );
              if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
            }
