@@ -32,6 +32,7 @@
  #include <unistd.h>
  #include <stdlib.h>
  #include <locale.h>
+ #include <stdarg.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls-agent-libs.h"
@@ -58,6 +59,29 @@
        agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
        agent->comm_status = etat;
      }
+  }
+/******************************************************************************************************************************/
+/* Agent_set_status: Publie un status texte de l'agent vers l'API via MQTT                                                   */
+/* Entrée: La structure afférente et une chaine formatée variadique                                                           */
+/* Sortie: aucune                                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_set_status ( struct ABLS_AGENT *agent, gchar *format, ... )
+  { gchar status[256];
+    va_list ap;
+
+    if (!agent || !agent->mqtt_api || !format) return;
+
+    va_start ( ap, format );
+    g_vsnprintf ( status, sizeof(status), format, ap );
+    va_end ( ap );
+
+    JsonNode *RootNode = Json_create();
+    if (!RootNode) return;
+
+    Json_add_string ( RootNode, "status", status );
+    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE,
+                        "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Json_unref ( RootNode );
   }
 /******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
@@ -264,6 +288,7 @@
                                );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/CLASS/%s", agent->domain_uuid, agent->agent_classe );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/RESTART/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/STOP/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
@@ -301,6 +326,7 @@
 
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is UP" );
+    Agent_set_status ( agent, "Agent is UP" );
     return ( agent );
   }
 /******************************************************************************************************************************/
@@ -324,8 +350,11 @@
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
   { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
+    Agent_set_status ( agent, "Agent is stopping" );
     sleep(1);
+    Agent_stop ( agent );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     g_free(agent);
     exit(0);
   }
@@ -335,11 +364,12 @@
 /* Sortie: néant, ne revient pas                                                                                              */
 /******************************************************************************************************************************/
  void Agent_restart ( struct ABLS_AGENT *agent )
-  { Agent_stop ( agent );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is Restarting in 5 seconds." );
-    gchar **argv = agent->argv;
-    sleep(5);
+  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting." );
+    Agent_set_status ( agent, "Agent is restarting" );
+    sleep(1);
+    Agent_stop ( agent );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
+    gchar **argv = agent->argv;
     g_free(agent);
     execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */
     exit(0);
