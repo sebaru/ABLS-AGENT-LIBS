@@ -68,7 +68,7 @@
 
     char *ptr = g_try_realloc( buffer->body, buffer->size + chunksize + 1 );
     if(!ptr)
-     { Info( __func__, "http", buffer->agent->agent_tech_id, LOG_ERR, "Realloc failed" ); return(0); }
+     { Info( __func__, "http", buffer->agent->agent_tech_id, LOG_ALERT, "Realloc failed" ); return(0); }
 
     buffer->body = ptr;
     memcpy( buffer->body + buffer->size, contents, chunksize );
@@ -136,7 +136,7 @@
     gint http_code;
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
-    if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Malloc buffer failed", url ); goto end; }
+    if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Request to %s: Malloc buffer failed", url ); goto end; }
     buffer->agent = agent;
     curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, Http_Write_CB );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, buffer );
@@ -163,7 +163,7 @@ end:
 
     if (!ReponseNode) ReponseNode = Json_create ();                            /* Si pas de body en response, on en créé un */
     if (ReponseNode) { Json_add_int ( ReponseNode, "http_code", http_code ); }
-    else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Memory Error" );
+    else Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Memory Error" );
     return(ReponseNode);
   }
 /******************************************************************************************************************************/
@@ -215,7 +215,7 @@ end:
   { gint taille_nom_fichier = 256;
     gchar *nom_fichier = g_try_malloc0(taille_nom_fichier);
     if (!nom_fichier)
-     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Memory error for Caching %s", query );
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Memory error for Caching %s", query );
        return(NULL);
      }
     g_snprintf ( nom_fichier, taille_nom_fichier, "http_cache/%s", query );

@@ -41,7 +41,7 @@
 
     JsonNode *PluginNode = Json_create();
     if (!PluginNode)
-     { Info( __func__, "dls", agent->agent_tech_id, LOG_ERR, "Memory error while creating DLS pluginNode" );
+      { Info( __func__, "dls", agent->agent_tech_id, LOG_ALERT, "Memory error while creating DLS pluginNode" );
        return(FALSE);
      }
     Json_add_string ( PluginNode, "tech_id", agent->agent_tech_id );

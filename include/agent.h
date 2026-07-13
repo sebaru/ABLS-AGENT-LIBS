@@ -44,8 +44,17 @@
         NBR_AGENT_ARCHIVE
       };
 
+ enum { AGENT_IS_STOPPED,
+        AGENT_IS_RUNNING,
+        AGENT_NEED_TO_STOP,
+        AGENT_NEED_TO_RESTART,
+        NBR_AGENT_STATUS,
+      };
+
  struct ABLS_AGENT
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
+    gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
+    gchar **argv;
     struct ABLS_MQTT *mqtt_local;
     struct ABLS_MQTT *mqtt_api;
     JsonNode *local_config;                                                      /* Pointeur vers la config locale de l'agent */
@@ -77,8 +86,10 @@
  extern void               Agent_enable_signals       ( struct ABLS_AGENT *agent );
  extern void               Agent_disable_signals      ( void );
  extern void               Agent_send_comm_to_master  ( struct ABLS_AGENT *agent, gboolean etat );
+ extern void               Agent_set_status           ( struct ABLS_AGENT *agent, gchar *format, ... );
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
+ extern void               Agent_restart              ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

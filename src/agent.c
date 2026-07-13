@@ -32,6 +32,7 @@
  #include <unistd.h>
  #include <stdlib.h>
  #include <locale.h>
+ #include <stdarg.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls-agent-libs.h"
@@ -58,6 +59,28 @@
        agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
        agent->comm_status = etat;
      }
+  }
+/******************************************************************************************************************************/
+/* Agent_set_status: Publie un status texte de l'agent vers l'API via MQTT                                                   */
+/* Entrée: La structure afférente et une chaine formatée variadique                                                           */
+/* Sortie: aucune                                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_set_status ( struct ABLS_AGENT *agent, gchar *format, ... )
+  { gchar status[256];
+    va_list ap;
+
+    if (!agent || !agent->mqtt_api || !format) return;
+
+    va_start ( ap, format );
+    g_vsnprintf ( status, sizeof(status), format, ap );
+    va_end ( ap );
+
+    JsonNode *RootNode = Json_create();
+    if (!RootNode) return;
+
+    Json_add_string ( RootNode, "status", status );
+    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Json_unref ( RootNode );
   }
 /******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
@@ -91,7 +114,11 @@
     if (api_message)
      { if ( Mqtt_topic_is ( api_message, 4, "+", "STOP", "AGENT", agent->agent_tech_id ) )
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping by API request" );
-          agent->Agent_run = FALSE;
+          agent->Agent_run = AGENT_NEED_TO_STOP;
+        }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "RESTART", "AGENT", agent->agent_tech_id ) )
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting by API request" );
+          agent->Agent_run = AGENT_NEED_TO_RESTART;
         }
        else if ( Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "AGENT", agent->agent_tech_id )
               || Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "CLASS", agent->agent_classe ) )
@@ -104,12 +131,16 @@
              g_snprintf ( chaine, sizeof(chaine), "sudo dnf upgrade abls-agent-%s", agent->agent_classe );
              system(chaine);
              Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: done. Restarting." );
-             agent->Agent_run = FALSE;                                                                  /* Stop old processes */
+             agent->Agent_run = AGENT_NEED_TO_RESTART;                                                  /* Stop old processes */
              exit(0);
            }
         }
        else if ( Mqtt_topic_is ( api_message, 4, "+", "LOG", "AGENT", agent->agent_tech_id ) )
-        { if ( Json_has_member ( api_message, "debug" ) )
+        { if ( Json_has_member ( api_message, "log_level" ) )
+           { gint log_level = Json_get_int ( api_message, "log_level" );
+             Info_change_log_level ( log_level );
+           }
+          else if ( Json_has_member ( api_message, "debug" ) )
            { gchar *facility = Json_get_string ( api_message, "debug" );
              if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
            }
@@ -134,14 +165,14 @@
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "Memory error trying to malloc struct ABLS_AGENT" );
+     { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
     Agent_enable_signals ( agent );
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
     if (!agent->local_config)
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "Memory error trying to malloc local config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc local config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
     Json_add_int ( agent->local_config, "log_level", LOG_INFO );
@@ -158,30 +189,32 @@
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'agent_tech_id', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "api_url" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'api_url', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "server_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'server_uuid', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "domain_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'domain_uuid', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (!Json_has_member( agent->local_config, "domain_secret" ))
-     { Info( __func__, agent_classe, NULL, LOG_ERR, "There is no 'domain_secret', in config, exiting." );
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
+    agent->argc          = argc;
+    agent->argv          = argv;
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
@@ -202,7 +235,7 @@
     if (sizeof_vars)
      { agent->vars = g_try_malloc0 ( sizeof_vars );
        if (!agent->vars)
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error for vars, exiting." );
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for vars, exiting." );
           Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
         }
      }
@@ -217,19 +250,21 @@
        Json_unref ( RootNode );
      }
     else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Memory error for POST_CONFIG, exiting." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for POST_CONFIG, exiting." );
        Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
      }
 
     if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
-     { agent->Agent_run = TRUE; }
+     { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) );
+       agent->Agent_run = TRUE;
+     }
     else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "POST_CONFIG from API Failed. Unloading." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
        Agent_end ( agent );
      }
 
     if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "Agent disabled in API config. Unloading." );
+     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "Agent disabled in API config. Unloading." );
        Agent_end ( agent );
      }
 
@@ -252,6 +287,7 @@
                                );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/CLASS/%s", agent->domain_uuid, agent->agent_classe );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/RESTART/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/STOP/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
@@ -289,14 +325,15 @@
 
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is UP" );
+    Agent_set_status ( agent, "Agent is UP" );
     return ( agent );
   }
 /******************************************************************************************************************************/
-/* Agent_end: appelé par chaque agent, lors de son arret                                                                      */
+/* Agent_stop: appelé par chaque agent, lors de son arret                                                                     */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Agent_end ( struct ABLS_AGENT *agent )
+ static void Agent_stop ( struct ABLS_AGENT *agent )
   { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
     Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
@@ -304,9 +341,36 @@
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
+  }
+/******************************************************************************************************************************/
+/* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant, ne revient pas.                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_end ( struct ABLS_AGENT *agent )
+  { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
+    Agent_set_status ( agent, "Agent is stopping" );
+    sleep(1);
+    Agent_stop ( agent );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     g_free(agent);
+    exit(0);
+  }
+/******************************************************************************************************************************/
+/* Agent_restart: appelé pour restarter le meme agent                                                                         */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant, ne revient pas                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_restart ( struct ABLS_AGENT *agent )
+  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting." );
+    Agent_set_status ( agent, "Agent is restarting" );
     sleep(1);
+    Agent_stop ( agent );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
+    gchar **argv = agent->argv;
+    g_free(agent);
+    execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */
     exit(0);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
