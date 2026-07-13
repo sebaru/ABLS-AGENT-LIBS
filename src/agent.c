@@ -79,8 +79,7 @@
     if (!RootNode) return;
 
     Json_add_string ( RootNode, "status", status );
-    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE,
-                        "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Json_unref ( RootNode );
   }
 /******************************************************************************************************************************/
