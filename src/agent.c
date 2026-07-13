@@ -186,6 +186,8 @@
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
+    agent->argc          = argc;
+    agent->argv          = argv;
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
@@ -298,11 +300,11 @@
     return ( agent );
   }
 /******************************************************************************************************************************/
-/* Agent_end: appelé par chaque agent, lors de son arret                                                                      */
+/* Agent_stop: appelé par chaque agent, lors de son arret                                                                     */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Agent_end ( struct ABLS_AGENT *agent )
+ static void Agent_stop ( struct ABLS_AGENT *agent )
   { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
     Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
@@ -310,9 +312,31 @@
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
+  }
+/******************************************************************************************************************************/
+/* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant, ne revient pas.                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_end ( struct ABLS_AGENT *agent )
+  { Agent_stop ( agent );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     g_free(agent);
     sleep(1);
+    exit(0);
+  }
+/******************************************************************************************************************************/
+/* Agent_restart: appelé pour restarter le meme agent                                                                         */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant, ne revient pas                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_restart ( struct ABLS_AGENT *agent )
+  { Agent_stop ( agent );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is Restarting in 5 seconds." );
+    gchar **argv = agent->argv;
+    g_free(agent);
+    sleep(5);
+    execvpe ( argv[0], argv, environ );
     exit(0);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
