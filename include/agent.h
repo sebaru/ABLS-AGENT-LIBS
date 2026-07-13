@@ -44,6 +44,13 @@
         NBR_AGENT_ARCHIVE
       };
 
+ enum { AGENT_IS_STOPPED,
+        AGENT_IS_RUNNING,
+        AGENT_NEED_TO_STOP,
+        AGENT_NEED_TO_RESTART,
+        NBR_AGENT_STATUS,
+      };
+
  struct ABLS_AGENT
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */

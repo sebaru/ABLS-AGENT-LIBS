@@ -91,7 +91,11 @@
     if (api_message)
      { if ( Mqtt_topic_is ( api_message, 4, "+", "STOP", "AGENT", agent->agent_tech_id ) )
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping by API request" );
-          agent->Agent_run = FALSE;
+          agent->Agent_run = AGENT_NEED_TO_STOP;
+        }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "RESTART", "AGENT", agent->agent_tech_id ) )
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting by API request" );
+          agent->Agent_run = AGENT_NEED_TO_RESTART;
         }
        else if ( Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "AGENT", agent->agent_tech_id )
               || Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "CLASS", agent->agent_classe ) )
@@ -104,7 +108,7 @@
              g_snprintf ( chaine, sizeof(chaine), "sudo dnf upgrade abls-agent-%s", agent->agent_classe );
              system(chaine);
              Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: done. Restarting." );
-             agent->Agent_run = FALSE;                                                                  /* Stop old processes */
+             agent->Agent_run = AGENT_NEED_TO_RESTART;                                                  /* Stop old processes */
              exit(0);
            }
         }
@@ -319,10 +323,10 @@
 /* Sortie: néant, ne revient pas.                                                                                             */
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
-  { Agent_stop ( agent );
+  { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
-    g_free(agent);
     sleep(1);
+    g_free(agent);
     exit(0);
   }
 /******************************************************************************************************************************/
@@ -334,9 +338,10 @@
   { Agent_stop ( agent );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is Restarting in 5 seconds." );
     gchar **argv = agent->argv;
-    g_free(agent);
     sleep(5);
-    execvpe ( argv[0], argv, environ );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
+    g_free(agent);
+    execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */
     exit(0);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
