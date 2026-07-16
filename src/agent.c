@@ -185,6 +185,7 @@
     Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
     Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
+    Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
@@ -221,7 +222,10 @@
     agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
+    agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
+
+    if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
 
 /*------------------------------------------------- Init ---------------------------------------------------------------------*/
     g_snprintf( chaine, sizeof(chaine), "W-%s", agent->agent_tech_id );                            /* Positionne le nom noyau */
@@ -334,13 +338,13 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  static void Agent_stop ( struct ABLS_AGENT *agent )
-  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
-    Agent_disable_signals();
+  { Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
   }
 /******************************************************************************************************************************/
 /* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
@@ -353,7 +357,6 @@
     Agent_set_status ( agent, "Agent is stopping" );
     sleep(1);
     Agent_stop ( agent );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     g_free(agent);
     exit(0);
   }
@@ -367,7 +370,6 @@
     Agent_set_status ( agent, "Agent is restarting" );
     sleep(1);
     Agent_stop ( agent );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     gchar **argv = agent->argv;
     g_free(agent);
     execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */

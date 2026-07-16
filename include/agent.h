@@ -65,6 +65,7 @@
     gchar *domain_uuid;                                                                                    /* UUID du domaine */
     gchar *domain_secret;                                                                                /* Secret du domaine */
     gchar *api_url;                                                                                           /* URL de l'API */
+    gboolean dry_run;                                                                 /* Do not really send Inputs or outputs */
     gint     comm_status;                                                       /* Report local du status de la communication */
     gint     comm_next_update;                                        /* Date du prochain update Watchdog COMM vers le master */
     JsonNode *IOs;
