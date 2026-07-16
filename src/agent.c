@@ -334,13 +334,13 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  static void Agent_stop ( struct ABLS_AGENT *agent )
-  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Agent is stopping" );
-    Agent_disable_signals();
+  { Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
   }
 /******************************************************************************************************************************/
 /* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
@@ -353,7 +353,6 @@
     Agent_set_status ( agent, "Agent is stopping" );
     sleep(1);
     Agent_stop ( agent );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     g_free(agent);
     exit(0);
   }
@@ -367,7 +366,6 @@
     Agent_set_status ( agent, "Agent is restarting" );
     sleep(1);
     Agent_stop ( agent );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
     gchar **argv = agent->argv;
     g_free(agent);
     execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */
