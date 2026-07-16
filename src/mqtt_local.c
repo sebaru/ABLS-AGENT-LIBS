@@ -50,7 +50,7 @@
        if (!RootNode) return;
        Json_add_double( RootNode, "valeur", valeur );
        Json_add_bool( RootNode, "in_range", in_range );
-       Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_AI/%s/%s", agent_tech_id, agent_acronyme );
+       if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_AI/%s/%s", agent_tech_id, agent_acronyme );
        Json_unref( RootNode );
      }
   }
@@ -73,7 +73,7 @@
        JsonNode *RootNode = Json_create();
        if (!RootNode) return;
        Json_add_bool( RootNode, "etat", etat );
-       Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_DI/%s/%s", agent_tech_id, agent_acronyme );
+       if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_DI/%s/%s", agent_tech_id, agent_acronyme );
        Json_unref( RootNode );
      }
   }
@@ -88,7 +88,7 @@
     if (!thread_di) return;
     Json_add_string( thread_di, "from_thread_tech_id", agent->agent_tech_id );
     Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
-    Mqtt_send_message ( agent->mqtt_local, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
     Json_unref( thread_di );
   }
 /******************************************************************************************************************************/
@@ -103,7 +103,7 @@
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
     Json_add_string( RootNode, "from_thread_tech_id", agent->agent_tech_id );
-    Mqtt_send_message ( agent->mqtt_local, RootNode, FALSE, "SET_CI_PULSE/%s/%s", agent->agent_tech_id, thread_acronyme );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, FALSE, "SET_CI_PULSE/%s/%s", agent->agent_tech_id, thread_acronyme );
     Json_unref( RootNode );
   }
 /******************************************************************************************************************************/
@@ -118,7 +118,7 @@
     Json_add_int( agent_watchdog, "consigne", consigne );
 
     Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent->agent_tech_id, agent_acronyme, consigne );
-    Mqtt_send_message ( agent->mqtt_local, agent_watchdog, TRUE, "SET_WATCHDOG/%s/%s", agent->agent_tech_id, agent_acronyme );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, agent_watchdog, TRUE, "SET_WATCHDOG/%s/%s", agent->agent_tech_id, agent_acronyme );
     Json_unref( agent_watchdog );
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/

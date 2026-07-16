@@ -185,6 +185,7 @@
     Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
     Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
+    Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
@@ -221,7 +222,10 @@
     agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
+    agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
+
+    if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
 
 /*------------------------------------------------- Init ---------------------------------------------------------------------*/
     g_snprintf( chaine, sizeof(chaine), "W-%s", agent->agent_tech_id );                            /* Positionne le nom noyau */
