@@ -105,7 +105,7 @@
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
     Json_add_string ( node, "libelle", libelle );
     Json_add_bool   ( node, "mono", mono );
-    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/thread/add/do", node );
+    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/do", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add DO %s to API", agent_acronyme ); }
     Json_unref ( api_result );
@@ -175,11 +175,11 @@
     Json_unref ( node );
   }
 /******************************************************************************************************************************/
-/* Mnemo_delete_thread_HORLOGE_tick: Supprime un tick sur une horloge donnée                                                  */
+/* Mnemo_delete_HORLOGE_tick: Supprime un tick sur une horloge donnée                                                         */
 /* Entrée: la structure ABLS_AGENT, les parametres de l'HORLOGE                                                               */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Mnemo_delete_thread_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit )
+ void Mnemo_delete_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit )
   { if (!bit) return;
     Json_add_string ( bit, "classe", "HORLOGE" );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/del/tick", bit );

@@ -28,15 +28,15 @@
 #ifndef _ABLS_AGENT_LIBS_MNEMONIQUE_H_
  #define _ABLS_AGENT_LIBS_MNEMONIQUE_H_
 
- extern JsonNode *Mnemo_create_AI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
- extern JsonNode *Mnemo_create_DI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
- extern JsonNode *Mnemo_create_CI                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
- extern JsonNode *Mnemo_create_DO                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gboolean mono );
- extern JsonNode *Mnemo_create_AO                 ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
- extern JsonNode *Mnemo_create_HORLOGE            ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
- extern void      Mnemo_create_HORLOGE_tick       ( struct ABLS_AGENT *agent, JsonNode *bit, gint heure, gint minute );
- extern void      Mnemo_delete_thread_HORLOGE_tick( struct ABLS_AGENT *agent, JsonNode *bit );
- extern JsonNode *Mnemo_create_WATCHDOG           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
+ extern JsonNode *Mnemo_create_AI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
+ extern JsonNode *Mnemo_create_DI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
+ extern JsonNode *Mnemo_create_CI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
+ extern JsonNode *Mnemo_create_DO           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gboolean mono );
+ extern JsonNode *Mnemo_create_AO           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage );
+ extern JsonNode *Mnemo_create_HORLOGE      ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
+ extern void      Mnemo_create_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit, gint heure, gint minute );
+ extern void      Mnemo_delete_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit );
+ extern JsonNode *Mnemo_create_WATCHDOG     ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle );
 
 #endif /* _ABLS_AGENT_LIBS_MNEMONIQUE_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
