@@ -38,6 +38,24 @@
  #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
+/* Agent_get_mqtt_api_message: Dépile un message de la queue MQTT API (non-bloquant)                                          */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
+/******************************************************************************************************************************/
+ JsonNode *Agent_get_mqtt_api_message ( struct ABLS_AGENT *agent )
+  { if (!agent || !agent->mqtt_api) return(NULL);
+    return ( Mqtt_get_message ( agent->mqtt_api ) );
+  }
+/******************************************************************************************************************************/
+/* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                    */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
+/******************************************************************************************************************************/
+ JsonNode *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent )
+  { if (!agent || !agent->mqtt_local) return(NULL);
+    return ( Mqtt_get_message ( agent->mqtt_local ) );
+  }
+/******************************************************************************************************************************/
 /* Agent_send_comm_to_master: Envoi le statut de la comm au master                                                            */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: aucune                                                                                                             */
