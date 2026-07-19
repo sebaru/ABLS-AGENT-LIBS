@@ -46,30 +46,7 @@
   { if (!agent || !agent->mqtt_api) return(NULL);
     JsonNode *api_message = Mqtt_get_message ( agent->mqtt_api );
     if (api_message)
-     { if ( Mqtt_topic_is ( api_message, 4, "+", "STOP", "AGENT", agent->agent_tech_id ) )
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping by API request" );
-          agent->Agent_run = AGENT_NEED_TO_STOP;
-        }
-       else if ( Mqtt_topic_is ( api_message, 4, "+", "RESTART", "AGENT", agent->agent_tech_id ) )
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting by API request" );
-          agent->Agent_run = AGENT_NEED_TO_RESTART;
-        }
-       else if ( Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "AGENT", agent->agent_tech_id )
-              || Mqtt_topic_is ( api_message, 4, "+", "UPGRADE", "CLASS", agent->agent_classe ) )
-        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is upgrading by API request" );
-          gint new_pid = fork();
-          if (new_pid<0)
-           { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: Fork Error" ); }
-          else if (!new_pid)
-           { gchar chaine[256];
-             g_snprintf ( chaine, sizeof(chaine), "sudo dnf upgrade abls-agent-%s", agent->agent_classe );
-             system(chaine);
-             Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Fils: UPGRADE: done. Restarting." );
-             agent->Agent_run = AGENT_NEED_TO_RESTART;                                                  /* Stop old processes */
-             exit(0);
-           }
-        }
-       else if ( Mqtt_topic_is ( api_message, 4, "+", "LOG", "AGENT", agent->agent_tech_id ) )
+     { if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "LOG" ) )
         { if ( Json_has_member ( api_message, "log_level" ) )
            { gint log_level = Json_get_int ( api_message, "log_level" );
              Info_change_log_level ( log_level );
@@ -307,12 +284,8 @@
                                  Json_get_int ( agent->api_config, "mqtt_port" ),
                                  Json_get_int ( agent->api_config, "mqtt_qos" )
                                );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/UPGRADE/CLASS/%s", agent->domain_uuid, agent->agent_classe );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/RESTART/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/STOP/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/TEST/AGENT/%s",    agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/LOG/AGENT/%s",     agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
     Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_start ( agent->mqtt_api );
 
