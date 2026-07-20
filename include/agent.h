@@ -91,6 +91,8 @@
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
  extern void               Agent_restart              ( struct ABLS_AGENT *agent );
+ extern JsonNode          *Agent_get_mqtt_api_message ( struct ABLS_AGENT *agent );
+ extern JsonNode          *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
