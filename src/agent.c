@@ -154,10 +154,10 @@
 /******************************************************************************************************************************/
  struct ABLS_AGENT *Agent_init ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars, int argc, char **argv )
   { gchar chaine[128];
+    setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     Info_init ( entete, "agent_tech_id", LOG_INFO );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with agent_libs version %s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
-    setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
@@ -170,7 +170,8 @@
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc local config, exiting." );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
-    Json_add_int ( agent->local_config, "log_level", LOG_INFO );
+    Json_add_int  ( agent->local_config, "log_level", LOG_INFO );                     /* Mise en place des valeurs par défaut */
+    Json_add_bool ( agent->local_config, "dry_run", FALSE );
 
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
