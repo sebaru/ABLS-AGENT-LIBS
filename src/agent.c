@@ -98,7 +98,7 @@
      }
   }
 /******************************************************************************************************************************/
-/* Agent_set_status: Publie un status texte de l'agent vers l'API via MQTT                                                   */
+/* Agent_set_status: Publie un status texte de l'agent vers l'API via MQTT                                                    */
 /* Entrée: La structure afférente et une chaine formatée variadique                                                           */
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
@@ -116,7 +116,7 @@
     if (!RootNode) return;
 
     Json_add_string ( RootNode, "status", status );
-    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
     Json_unref ( RootNode );
   }
 /******************************************************************************************************************************/
@@ -287,7 +287,7 @@
                                );
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/STATUS/AGENT/%s", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_start ( agent->mqtt_api );
 
     agent->mqtt_local = Mqtt_init( "mqtt_local", agent->agent_tech_id, agent->agent_tech_id,
@@ -336,7 +336,6 @@
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is DOWN" );
   }
 /******************************************************************************************************************************/
 /* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
@@ -346,7 +345,7 @@
  void Agent_end ( struct ABLS_AGENT *agent )
   { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
-    Agent_set_status ( agent, "Agent is stopping" );
+    Agent_set_status ( agent, "Agent is stopped" );
     sleep(1);
     Agent_stop ( agent );
     g_free(agent);
