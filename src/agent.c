@@ -172,7 +172,17 @@
     Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
+    Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
+
+    if (Json_get_bool ( agent->local_config, "save" ))
+     { Json_remove ( agent->local_config, "save" );
+
+       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
+        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+       else
+        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+     }
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
