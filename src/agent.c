@@ -114,10 +114,10 @@
 
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
-
     Json_add_string ( RootNode, "status", status );
     Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
     Json_unref ( RootNode );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, status );
   }
 /******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
@@ -146,6 +146,16 @@
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        agent->telemetrie_next_update = time(NULL) + 60;
      }
+  }
+/******************************************************************************************************************************/
+/* Agent_is_ready: appelé au demarrage lorsque l'agent est pret                                                               */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_is_ready ( struct ABLS_AGENT *agent )
+  { Mqtt_start ( agent->mqtt_local );
+    Mqtt_start ( agent->mqtt_api );
+    Agent_set_status ( agent, "Agent is UP" );
   }
 /******************************************************************************************************************************/
 /* Agent_init: appelé par chaque agent, lors de son démarrage                                                                 */
@@ -288,7 +298,6 @@
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
     Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_start ( agent->mqtt_api );
 
     agent->mqtt_local = Mqtt_init( "mqtt_local", agent->agent_tech_id, agent->agent_tech_id,
                                    Json_get_bool ( agent->local_config, "mqtt_over_ssl" ),
@@ -301,7 +310,6 @@
                                  );
     Mqtt_subscribe ( agent->mqtt_local, "SET_AO/%s/#", agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
-    Mqtt_start ( agent->mqtt_local );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
   if (Dls_create_agent_plugin( agent ) == FALSE)
@@ -320,8 +328,6 @@
     agent->ai_log_par_min      = Mnemo_create_AI ( agent, "LOG_PAR_MIN", "Logs par minute", "logs/min", AGENT_ARCHIVE_1_MIN );
 
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is UP" );
-    Agent_set_status ( agent, "Agent is UP" );
     return ( agent );
   }
 /******************************************************************************************************************************/

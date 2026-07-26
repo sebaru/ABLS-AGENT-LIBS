@@ -84,6 +84,7 @@
 
  extern struct ABLS_AGENT *Agent_init                 ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars,
                                                         gint argc, gchar **argv );
+ extern void               Agent_is_ready             ( struct ABLS_AGENT *agent );
  extern void               Agent_enable_signals       ( struct ABLS_AGENT *agent );
  extern void               Agent_disable_signals      ( void );
  extern void               Agent_send_comm_to_master  ( struct ABLS_AGENT *agent, gboolean etat );
