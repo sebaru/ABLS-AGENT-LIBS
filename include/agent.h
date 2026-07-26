@@ -53,6 +53,7 @@
 
  struct ABLS_AGENT
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
+    gboolean is_debian;                                                          /* TRUE if the underlying OS is Debian-based */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
     gchar **argv;
     struct ABLS_MQTT *mqtt_local;
@@ -84,6 +85,7 @@
 
  extern struct ABLS_AGENT *Agent_init                 ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars,
                                                         gint argc, gchar **argv );
+ extern void               Agent_is_ready             ( struct ABLS_AGENT *agent );
  extern void               Agent_enable_signals       ( struct ABLS_AGENT *agent );
  extern void               Agent_disable_signals      ( void );
  extern void               Agent_send_comm_to_master  ( struct ABLS_AGENT *agent, gboolean etat );
@@ -91,7 +93,6 @@
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
  extern void               Agent_restart              ( struct ABLS_AGENT *agent );
- extern JsonNode          *Agent_get_mqtt_api_message ( struct ABLS_AGENT *agent );
  extern JsonNode          *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */
