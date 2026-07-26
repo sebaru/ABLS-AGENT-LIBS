@@ -53,6 +53,7 @@
 
  struct ABLS_AGENT
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
+    gboolean is_debian;                                                          /* TRUE if the underlying OS is Debian-based */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
     gchar **argv;
     struct ABLS_MQTT *mqtt_local;

@@ -142,6 +142,18 @@
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
     Agent_enable_signals ( agent );
+
+/*----------------------------------------------- Check de l'OS sous jacent --------------------------------------------------*/
+    GKeyFile *keyfile = g_key_file_new();
+    if (g_key_file_load_from_file(keyfile, "/etc/os-release", G_KEY_FILE_NONE, NULL))
+     { gchar *id = g_key_file_get_string(keyfile, "ID", NULL, NULL);
+        if (id != NULL)
+         { agent->is_debian = g_str_has_prefix(id, "debian") || g_str_has_prefix(id, "ubuntu");
+           g_free(id);
+         }
+        g_key_file_free(keyfile);
+     }
+
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
     if (!agent->local_config)
