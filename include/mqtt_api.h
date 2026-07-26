@@ -1,10 +1,10 @@
 /******************************************************************************************************************************/
-/* include/abls-agent-libs.h   Header parapluie — abls-agent-libs                                                             */
-/* Projet Abls-Habitat                               Gestion d'habitat                                       03.07.2026       */
+/* include/mqtt_api.h    Déclaration des prototypes MQTT API — abls-agent-libs                                              */
+/* Projet Abls-Habitat                               Gestion d'habitat                                       26.07.2026       */
 /* Auteur: LEFEVRE Sebastien                                                                                                  */
 /******************************************************************************************************************************/
 /*
- * abls-agent-libs.h
+ * mqtt_api.h
  * This file is part of Abls-Habitat
  *
  * Copyright (C) 1988-2026 - Sebastien LEFEVRE
@@ -25,17 +25,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef _ABLS_AGENT_LIBS_H_
- #define _ABLS_AGENT_LIBS_H_
+#ifndef _ABLS_AGENT_LIBS_MQTT_API_H_
+ #define _ABLS_AGENT_LIBS_MQTT_API_H_
 
- #include <abls-libs/abls-libs.h>
+ #include <glib.h>
+ #include <json-glib/json-glib.h>
 
  #include "agent.h"
- #include "http.h"
- #include "mqtt_api.h"
- #include "mqtt_local.h"
- #include "mnemonique.h"
- #include "dls.h"
 
-#endif /* _ABLS_AGENT_LIBS_H_ */
+ extern JsonNode *Agent_get_mqtt_api_message  ( struct ABLS_AGENT *agent );
+ extern void      Agent_send_mqtt_api_message ( struct ABLS_AGENT *agent, JsonNode *node, gboolean retain, gchar *topic, ... );
+
+#endif /* _ABLS_AGENT_LIBS_MQTT_API_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

@@ -37,35 +37,6 @@
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls-agent-libs.h"
 
-/******************************************************************************************************************************/
-/* Agent_get_mqtt_api_message: Dépile un message de la queue MQTT API (non-bloquant)                                          */
-/* Entrée: La structure afférente                                                                                             */
-/* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
-/******************************************************************************************************************************/
- JsonNode *Agent_get_mqtt_api_message ( struct ABLS_AGENT *agent )
-  { if (!agent || !agent->mqtt_api) return(NULL);
-    JsonNode *api_message = Mqtt_get_message ( agent->mqtt_api );
-    if (api_message)
-     { if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "LOG" ) )
-        { if ( Json_has_member ( api_message, "log_level" ) )
-           { gint log_level = Json_get_int ( api_message, "log_level" );
-             Info_change_log_level ( log_level );
-           }
-          else if ( Json_has_member ( api_message, "debug" ) )
-           { gchar *facility = Json_get_string ( api_message, "debug" );
-             if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
-           }
-          else if ( Json_has_member ( api_message, "undebug" ) )
-           { gchar *facility = Json_get_string ( api_message, "undebug" );
-             if (facility) Info_undebug_facility ( agent->agent_tech_id, facility );
-           }
-        }
-       else return ( api_message );                                      /* Transfert directement pour traitement par l'agent */
-     }
-    Json_unref ( api_message );                       /* Message traité en pre-emption par la librairie, on libère la mémoire */
-    return(NULL);
-  }
-/******************************************************************************************************************************/
 /* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                     */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
@@ -81,20 +52,9 @@
 /******************************************************************************************************************************/
  void Agent_send_comm_to_master ( struct ABLS_AGENT *agent, gboolean etat )
   { if (agent->comm_status != etat || agent->comm_next_update <= time(NULL))
-     { if (agent->mqtt_local == NULL) return;                                              /* Si pas de connexion, on return; */
-       Mqtt_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );
-
-       JsonNode *RootNode = Json_create();
-       Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
-       Json_add_string ( RootNode, "agent_tech_id", agent->agent_tech_id );
-       Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
-       Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
-       Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-       Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "HEARTBEAT" );
-       Json_unref ( RootNode );
-
-       agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
+     { Mqtt_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );
        agent->comm_status = etat;
+       agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
      }
   }
 /******************************************************************************************************************************/
@@ -139,12 +99,20 @@
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
-     { struct rusage conso;
+     { agent->telemetrie_next_update = time(NULL) + 60;
+       struct rusage conso;
        getrusage ( RUSAGE_SELF, &conso );
        Mqtt_Send_AI ( agent, agent->ai_max_rss, (gdouble)conso.ru_maxrss, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
-       agent->telemetrie_next_update = time(NULL) + 60;
+       JsonNode *RootNode = Json_create();
+       Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
+       Json_add_string ( RootNode, "agent_tech_id", agent->agent_tech_id );
+       Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
+       Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
+       Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
+       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "HEARTBEAT" );
+       Json_unref ( RootNode );
      }
   }
 /******************************************************************************************************************************/
