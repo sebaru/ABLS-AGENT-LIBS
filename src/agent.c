@@ -134,7 +134,7 @@
   { gchar chaine[128];
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     Info_init ( entete, "agent_tech_id", LOG_INFO );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with agent_libs version %s",
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with ABLS_AGENT_LIBS_VERSION=%s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
@@ -175,15 +175,6 @@
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
-    if (Json_get_bool ( agent->local_config, "save" ))
-     { Json_remove ( agent->local_config, "save" );
-
-       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
-        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
-       else
-        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
-     }
-
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
@@ -196,8 +187,10 @@
      }
 
     if (!Json_has_member( agent->local_config, "server_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', in config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', creating one." );
+       gchar server_uuid[37];  /* UUID is 36 characters + null terminator */
+       uuid_generate ( server_uuid );
+       Json_set_string ( agent->local_config, "server_uuid", server_uuid );
      }
 
     if (!Json_has_member( agent->local_config, "domain_uuid" ))
@@ -210,7 +203,18 @@
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
-    agent->argc          = argc;
+/*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
+    if (Json_get_bool ( agent->local_config, "save" ))
+     { Json_remove ( agent->local_config, "save" );
+
+       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
+        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+       else
+        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+     }
+
+
+     agent->argc          = argc;
     agent->argv          = argv;
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
