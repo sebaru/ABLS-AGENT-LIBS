@@ -98,7 +98,7 @@
     usleep(agent->nbr_tour_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
-    if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
+    if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= time(NULL))       /* Toutes les minutes + Init */
      { agent->telemetrie_next_update = time(NULL) + 60;
        struct rusage conso;
        getrusage ( RUSAGE_SELF, &conso );
@@ -109,7 +109,6 @@
        Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
        Json_add_string ( RootNode, "agent_tech_id", agent->agent_tech_id );
        Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
-       Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
        Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
        Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "HEARTBEAT" );
        Json_unref ( RootNode );
@@ -189,8 +188,8 @@
     if (!Json_has_member( agent->local_config, "server_uuid" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', creating one." );
        gchar server_uuid[37];  /* UUID is 36 characters + null terminator */
-       uuid_generate ( server_uuid );
-       Json_set_string ( agent->local_config, "server_uuid", server_uuid );
+       UUID_New ( (gchar *)&server_uuid );
+       Json_add_string ( agent->local_config, "server_uuid", server_uuid );
      }
 
     if (!Json_has_member( agent->local_config, "domain_uuid" ))
