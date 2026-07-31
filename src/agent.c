@@ -75,9 +75,9 @@
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
     Json_add_string ( RootNode, "status", status );
-    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
+    Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/STATUS", agent->agent_tech_id );
     Json_unref ( RootNode );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, status );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "%s", status );
   }
 /******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
@@ -106,11 +106,9 @@
        Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
-       Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
-       Json_add_string ( RootNode, "agent_tech_id", agent->agent_tech_id );
-       Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
-       Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "HEARTBEAT" );
+       Json_add_bool ( RootNode, "io_comm", agent->comm_status );
+       Json_add_bool ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
+       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/HEARTBEAT", agent->agent_tech_id );
        Json_unref ( RootNode );
      }
   }
