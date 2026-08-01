@@ -75,9 +75,9 @@
     JsonNode *RootNode = Json_create();
     if (!RootNode) return;
     Json_add_string ( RootNode, "status", status );
-    Mqtt_send_message ( agent->mqtt_api, RootNode, TRUE, "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
+    Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/STATUS", agent->agent_tech_id );
     Json_unref ( RootNode );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, status );
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "%s", status );
   }
 /******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
@@ -98,7 +98,7 @@
     usleep(agent->nbr_tour_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
-    if (agent->telemetrie_next_update <= time(NULL))                                                    /* Toutes les minutes */
+    if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= time(NULL))       /* Toutes les minutes + Init */
      { agent->telemetrie_next_update = time(NULL) + 60;
        struct rusage conso;
        getrusage ( RUSAGE_SELF, &conso );
@@ -106,12 +106,9 @@
        Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
-       Json_add_string ( RootNode, "agent_classe",  agent->agent_classe );
-       Json_add_string ( RootNode, "agent_tech_id", agent->agent_tech_id );
-       Json_add_bool   ( RootNode, "io_comm",       agent->comm_status );
-       Json_add_bool   ( RootNode, "mqtt_api_connected", Mqtt_is_connected ( agent->mqtt_api ) );
-       Json_add_bool   ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "HEARTBEAT" );
+       Json_add_bool ( RootNode, "io_comm", agent->comm_status );
+       Json_add_bool ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
+       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/HEARTBEAT", agent->agent_tech_id );
        Json_unref ( RootNode );
      }
   }
@@ -134,7 +131,7 @@
   { gchar chaine[128];
     setlocale( LC_ALL, "C" );                                            /* Pour le formattage correct des , . dans les float */
     Info_init ( entete, "agent_tech_id", LOG_INFO );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with agent_libs version %s",
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with ABLS_AGENT_LIBS_VERSION=%s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
@@ -175,15 +172,6 @@
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
-    if (Json_get_bool ( agent->local_config, "save" ))
-     { Json_remove ( agent->local_config, "save" );
-
-       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
-        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
-       else
-        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
-     }
-
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
@@ -196,8 +184,10 @@
      }
 
     if (!Json_has_member( agent->local_config, "server_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', in config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', creating one." );
+       gchar server_uuid[37];  /* UUID is 36 characters + null terminator */
+       UUID_New ( (gchar *)&server_uuid );
+       Json_add_string ( agent->local_config, "server_uuid", server_uuid );
      }
 
     if (!Json_has_member( agent->local_config, "domain_uuid" ))
@@ -210,7 +200,18 @@
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
-    agent->argc          = argc;
+/*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
+    if (Json_get_bool ( agent->local_config, "save" ))
+     { Json_remove ( agent->local_config, "save" );
+
+       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
+        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+       else
+        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+     }
+
+
+     agent->argc          = argc;
     agent->argv          = argv;
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
