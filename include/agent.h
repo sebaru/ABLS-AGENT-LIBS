@@ -71,10 +71,9 @@
     gint     comm_status;                                                       /* Report local du status de la communication */
     gint     comm_next_update;                                        /* Date du prochain update Watchdog COMM vers le master */
     JsonNode *IOs;
-    gint nbr_tour;
-    gint nbr_tour_par_sec;
-    gint nbr_tour_next_update;
-    gint nbr_tour_delai;
+
+    guint tps_consigne;                                                                   /* nombre de tour par seconde cible */
+    guint tps_value;                                                                     /* nombre de tour par seconde actuel */
 
     gint telemetrie_next_update;
     JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */

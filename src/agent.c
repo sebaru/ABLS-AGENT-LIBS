@@ -85,17 +85,22 @@
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
  void Agent_loop ( struct ABLS_AGENT *agent )
-  { Agent_send_comm_to_master ( agent, agent->comm_status );
+  { static guint  tps_nbr_tour = 0;
+    static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
+    static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
 
+    Agent_send_comm_to_master ( agent, agent->comm_status );
+
+    time_t now = time(NULL);
 /********************************************************* tour par secondes **************************************************/
-    if ( agent->nbr_tour_next_update <= time(NULL))                                                  /* Toutes les 1 secondes */
-     { agent->nbr_tour_par_sec = agent->nbr_tour;
-       agent->nbr_tour = 0;
-       if(agent->nbr_tour_par_sec > 50) agent->nbr_tour_delai += 50;
-       else if(agent->nbr_tour_delai>0) agent->nbr_tour_delai -= 50;
-       agent->nbr_tour_next_update = time(NULL) + 1;
-     } else agent->nbr_tour++;
-    usleep(agent->nbr_tour_delai);
+    if ( tps_next_update <= now )                                                                    /* Toutes les 1 secondes */
+     { agent->tps_value = tps_nbr_tour;
+       tps_nbr_tour = 0;
+       if(agent->tps_value > agent->tps_consigne)
+        { tps_delai += 50; } else if(tps_delai>0) { tps_delai -= 50; }                        /* Ajustemet du délai d'attente */
+       tps_next_update = now + 1;
+     } else tps_nbr_tour++;
+    usleep(tps_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= time(NULL))       /* Toutes les minutes + Init */
@@ -103,7 +108,7 @@
        struct rusage conso;
        getrusage ( RUSAGE_SELF, &conso );
        Mqtt_Send_AI ( agent, agent->ai_max_rss, (gdouble)conso.ru_maxrss, TRUE );
-       Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, agent->nbr_tour_par_sec, TRUE );
+       Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, 1.0*agent->tps_value, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
        Json_add_bool ( RootNode, "io_comm", agent->comm_status );
@@ -159,6 +164,7 @@
      }
     Json_add_int  ( agent->local_config, "log_level", LOG_INFO );                     /* Mise en place des valeurs par défaut */
     Json_add_bool ( agent->local_config, "dry_run", FALSE );
+    Json_add_int  ( agent->local_config, "tps", 50 );                                       /* 50 tour par seconde par défaut */
 
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
@@ -168,6 +174,7 @@
     Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
     Config_add_parameter ( "agent-tech-id", "TECH_ID", "Agent tech_id",     CONFIG_STRING );
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
+    Config_add_parameter ( "tps",           "TPS",     "Tour par seconde",  CONFIG_INT );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
@@ -220,6 +227,7 @@
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
+    agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
     if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
