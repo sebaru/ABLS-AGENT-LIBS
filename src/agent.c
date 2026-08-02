@@ -211,7 +211,7 @@
      }
 
 
-     agent->argc          = argc;
+    agent->argc          = argc;
     agent->argv          = argv;
     agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );

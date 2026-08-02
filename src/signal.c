@@ -40,12 +40,12 @@
 /* Entree: numero du signal a gerer                                                                                           */
 /******************************************************************************************************************************/
  static void Traitement_signaux( int num )
-  { char chaine[50] = "?";
+  { if (!local_agent) return;
+    if (num == SIGALRM) { local_agent->Top++; return; }  /* Gestion du timer */
+
+    char chaine[50] = "?";
     prctl(PR_GET_NAME, chaine, 0, 0, 0 );
-
-    if (!local_agent) return;
-    Info( __func__, "signal", local_agent->agent_tech_id, LOG_NOTICE, "Signal '%s' received", strsignal(num) );
-
+    Info( __func__, "signal", local_agent->agent_tech_id, LOG_NOTICE, "Signal '%s' received by '%s'", strsignal(num), chaine );
     switch (num)
      { case SIGQUIT:
        case SIGINT:  local_agent->Agent_run = FALSE;
@@ -73,12 +73,20 @@
     sig.sa_flags = SA_RESTART;
     sigemptyset ( &sig.sa_mask );
 
+    sigaction ( SIGALRM, &sig, NULL );
     sigaction ( SIGQUIT, &sig, NULL );
     sigaction ( SIGINT,  &sig, NULL );
     sigaction ( SIGTERM, &sig, NULL );
     sigaction ( SIGABRT, &sig, NULL );
     sigaction ( SIGPIPE, &sig, NULL );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Signal handlers installed" );
+
+/****************************************************** Démarrage du timer ****************************************************/
+    agent->timer.it_value.tv_sec  = agent->timer.it_interval.tv_sec  = 0;                       /* Tous les 100 millisecondes */
+    agent->timer.it_value.tv_usec = agent->timer.it_interval.tv_usec = 100000;                      /* = 10 fois par secondes */
+    setitimer( ITIMER_REAL, &agent->timer, NULL );                                                         /* Active le timer */
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO,
+          "Timer with interval %dms started", agent->timer.it_value.tv_usec/1000 );
   }
 /******************************************************************************************************************************/
 /* Agent_disable_signals: Desactive la gestion des signaux pour l'agent courant                                               */
@@ -101,6 +109,13 @@
     sigaction ( SIGPIPE, &sig, NULL );
 
     Info( __func__, local_agent->agent_classe, local_agent->agent_tech_id, LOG_INFO, "Signal handlers disabled" );
+
+/****************************************************** Arret du timer ********************************************************/
+    local_agent->timer.it_value.tv_sec  = local_agent->timer.it_interval.tv_sec  = 0;
+    local_agent->timer.it_value.tv_usec = local_agent->timer.it_interval.tv_usec = 0;
+    setitimer( ITIMER_REAL, &local_agent->timer, NULL );
+    Info( __func__, local_agent->agent_classe, local_agent->agent_tech_id, LOG_INFO, "Timer stopped" );
+
     local_agent = NULL;
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/

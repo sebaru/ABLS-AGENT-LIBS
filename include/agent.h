@@ -29,6 +29,7 @@
  #define _ABLS_AGENT_LIBS_AGENT_H_
 
  #include <signal.h>
+ #include <sys/time.h>
 
  #define ABLS_AGENT_CONFIG_FILE "/etc/abls-agent.conf"
 
@@ -79,6 +80,9 @@
     JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
     JsonNode *ai_max_rss;                                                                                      /* Maximum RSS */
     JsonNode *ai_log_par_min;                                                                              /* Logs par minute */
+
+    struct itimerval timer;
+    guint Top;                                                                                          /* dixième de seconde */
 
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
