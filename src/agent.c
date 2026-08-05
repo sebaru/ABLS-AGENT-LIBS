@@ -33,6 +33,7 @@
  #include <stdlib.h>
  #include <locale.h>
  #include <stdarg.h>
+ #include <grp.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls-agent-libs.h"
@@ -138,6 +139,7 @@
     Info_init ( entete, "agent_tech_id", LOG_INFO );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with ABLS_AGENT_LIBS_VERSION=%s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
+    Info( __func__, agent_classe, NULL, LOG_INFO, "User  '%s',  Group = '%s'", getlogin(), getgrgid(getgid())->gr_name );
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
