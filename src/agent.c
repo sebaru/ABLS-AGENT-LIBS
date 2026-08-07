@@ -141,7 +141,7 @@
     Info_init ( entete, "agent_tech_id", LOG_INFO );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Agent of class '%s' (version %s) is starting with ABLS_AGENT_LIBS_VERSION=%s",
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "User '%s', Group = '%s'",
+    Info( __func__, agent_classe, NULL, LOG_INFO, "User='%s', Group='%s'",
           getpwuid(getuid())->pw_name, getgrgid(getgid())->gr_name );
     Info( __func__, agent_classe, NULL, LOG_INFO, "Using directory '%s'", g_get_current_dir() );
 
@@ -150,6 +150,10 @@
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
+    agent->argc          = argc;
+    agent->argv          = argv;
+    agent->agent_classe  = agent_classe;
+
     Agent_enable_signals ( agent );
     Http_Init ( agent );
 
@@ -228,9 +232,6 @@
         { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
      }
 
-    agent->argc          = argc;
-    agent->argv          = argv;
-    agent->agent_classe  = agent_classe;
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
     agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
