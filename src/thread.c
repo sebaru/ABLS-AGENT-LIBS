@@ -45,9 +45,9 @@
        else break;
      }
 
-    g_rw_lock_writer_lock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_writer_lock ( &agent->Thread_shell_lock );
     agent->Thread_shell = NULL;
-    g_rw_lock_writer_unlock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_writer_unlock ( &agent->Thread_shell_lock );
     return(NULL);
   }
 /******************************************************************************************************************************/
@@ -73,13 +73,13 @@
 
     g_async_queue_push ( agent->Thread_shell_queue, queued );
 
-    g_rw_lock_reader_lock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_reader_lock ( &agent->Thread_shell_lock );
     gboolean worker_running = (agent->Thread_shell != NULL);
-    g_rw_lock_reader_unlock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_reader_unlock ( &agent->Thread_shell_lock );
     if (worker_running) return;
 
-    g_rw_lock_writer_lock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_writer_lock ( &agent->Thread_shell_lock );
     agent->Thread_shell = g_thread_new ( name, Thread_shell_queue_exec, agent );
-    g_rw_lock_writer_unlock ( &agent->Thread_shell_queue_lock );
+    g_rw_lock_writer_unlock ( &agent->Thread_shell_lock );
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
