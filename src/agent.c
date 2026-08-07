@@ -143,6 +143,7 @@
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     Info( __func__, agent_classe, NULL, LOG_INFO, "User '%s', Group = '%s'",
           getpwuid(getuid())->pw_name, getgrgid(getgid())->gr_name );
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Using directory '%s'", g_get_current_dir() );
 
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
@@ -150,6 +151,7 @@
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
     Agent_enable_signals ( agent );
+    Http_Init ( agent );
 
 /*----------------------------------------------- Check de l'OS sous jacent --------------------------------------------------*/
     gchar *path_dnf = g_find_program_in_path ( "dnf" );
@@ -347,6 +349,7 @@
     g_thread_join ( agent->Thread_shell );
     g_async_queue_unref ( agent->Thread_shell_queue );
     if (agent->vars) { g_free(agent->vars); }
+    Http_End ( agent );
     Json_unref ( agent->IOs );
   }
 /******************************************************************************************************************************/
