@@ -30,37 +30,37 @@
  #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
-/* Thread_exec_queue: Consomme la queue de textes de l'agent                                                                  */
+/* Thread_shell_queue_exec: Consomme la queue de textes de l'agent                                                            */
 /* Entree: pointeur agent                                                                                                     */
 /* Sortie: NULL                                                                                                               */
 /******************************************************************************************************************************/
- static gpointer Thread_exec_queue ( gpointer user_data )
+ static gpointer Thread_shell_queue_exec ( gpointer user_data )
   { struct ABLS_AGENT *agent = user_data;
 
     if (!agent) return NULL;
 
     while (agent->Agent_run == AGENT_IS_RUNNING)
-     { gchar *text = g_async_queue_try_pop ( agent->Thread_queue );
+     { gchar *text = g_async_queue_try_pop ( agent->Thread_shell_queue );
        if (text) { Exec (text); g_free ( text ); }
        else break;
      }
 
-    g_rw_lock_writer_lock ( &agent->Thread_lock );
-    agent->Thread = NULL;
-    g_rw_lock_writer_unlock ( &agent->Thread_lock );
+    g_rw_lock_writer_lock ( &agent->Thread_shell_queue_lock );
+    agent->Thread_shell = NULL;
+    g_rw_lock_writer_unlock ( &agent->Thread_shell_queue_lock );
     return(NULL);
   }
 /******************************************************************************************************************************/
-/* Thread_exec: Enfile une chaine de caracteres et demarre le worker a la demande                                             */
-/* Entree: structure agent, chaine formattee variadique                                                                        */
+/* Thread_shell_queue: Enfile une chaine de caracteres et demarre le worker a la demande                                      */
+/* Entree: structure agent, chaine formattee variadique                                                                       */
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
- void Thread_exec ( struct ABLS_AGENT *agent, gchar *name, const gchar *format, ... )
+ void Thread_shell_queue ( struct ABLS_AGENT *agent, gchar *name, const gchar *format, ... )
   { gchar *queued;
     va_list ap;
 
     if (!agent || !format) return;
-    if (agent->Agent_run != AGENT_IS_RUNNING || !agent->Thread_queue) return;
+    if (agent->Agent_run != AGENT_IS_RUNNING || !agent->Thread_shell_queue) return;
 
     va_start ( ap, format );
     queued = g_strdup_vprintf ( format, ap );
@@ -71,24 +71,15 @@
        return;
      }
 
-    g_async_queue_push ( agent->Thread_queue, queued );
+    g_async_queue_push ( agent->Thread_shell_queue, queued );
 
-    g_rw_lock_reader_lock ( &agent->Thread_lock );
-    gboolean worker_running = (agent->Thread != NULL);
-    g_rw_lock_reader_unlock ( &agent->Thread_lock );
+    g_rw_lock_reader_lock ( &agent->Thread_shell_queue_lock );
+    gboolean worker_running = (agent->Thread_shell != NULL);
+    g_rw_lock_reader_unlock ( &agent->Thread_shell_queue_lock );
     if (worker_running) return;
 
-    g_rw_lock_writer_lock ( &agent->Thread_lock );
-    agent->Thread = g_thread_new ( name, Thread_exec_queue, agent );
-    g_rw_lock_writer_unlock ( &agent->Thread_lock );
-  }
-/******************************************************************************************************************************/
-/* Thread_run: lance un thread en mode detaché                                                                                */
-/* Entree: structure agent, le nom du thread, la fonction                                                                     */
-/* Sortie: aucune                                                                                                             */
-/******************************************************************************************************************************/
- void Thread_run_detached ( gchar *name, gpointer (*Thread_function)(gpointer user_data), gpointer user_data )
-  { if (!name || !Thread_function) return;
-    g_thread_unref ( g_thread_new ( name, Thread_function, user_data ) );
+    g_rw_lock_writer_lock ( &agent->Thread_shell_queue_lock );
+    agent->Thread_shell = g_thread_new ( name, Thread_shell_queue_exec, agent );
+    g_rw_lock_writer_unlock ( &agent->Thread_shell_queue_lock );
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/

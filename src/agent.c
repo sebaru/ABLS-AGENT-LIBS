@@ -160,10 +160,10 @@
     agent->is_apt = (path_apt != NULL);
     g_free ( path_apt );
 
-/*----------------------------------------------- Init du contexte Thread ----------------------------------------------------*/
-    g_rw_lock_init ( &agent->Thread_lock );
-    agent->Thread_queue = g_async_queue_new_full(g_free);                /* Création de la queue de messages pour les threads */
-    agent->Thread = NULL;
+/*----------------------------------------------- Init du contexte Thread Shell ----------------------------------------------*/
+    g_rw_lock_init ( &agent->Thread_shell_queue_lock );
+    agent->Thread_shell_queue = g_async_queue_new_full(g_free);          /* Création de la queue de messages pour les threads */
+    agent->Thread_shell = NULL;
 
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
@@ -344,8 +344,8 @@
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
-    g_thread_join ( agent->Thread );
-    g_async_queue_unref ( agent->Thread_queue );
+    g_thread_join ( agent->Thread_shell );
+    g_async_queue_unref ( agent->Thread_shell_queue );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
   }
