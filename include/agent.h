@@ -76,7 +76,7 @@
     guint tps_consigne;                                                                   /* nombre de tour par seconde cible */
     guint tps_value;                                                                     /* nombre de tour par seconde actuel */
 
-    gint telemetrie_next_update;
+    guint telemetrie_next_update;
     JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
     JsonNode *ai_max_rss;                                                                                      /* Maximum RSS */
     JsonNode *ai_log_par_min;                                                                              /* Logs par minute */

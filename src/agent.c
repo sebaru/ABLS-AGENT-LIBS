@@ -93,20 +93,20 @@
 
     Agent_send_comm_to_master ( agent, agent->comm_status );
 
-    time_t now = time(NULL);
+    guint now = agent->Top;
 /********************************************************* tour par secondes **************************************************/
     if ( tps_next_update <= now )                                                                    /* Toutes les 1 secondes */
      { agent->tps_value = tps_nbr_tour;
        tps_nbr_tour = 0;
        if(agent->tps_value > agent->tps_consigne)
         { tps_delai += 50; } else if(tps_delai>0) { tps_delai -= 50; }                        /* Ajustemet du délai d'attente */
-       tps_next_update = now + 1;
+       tps_next_update = now + 10;
      } else tps_nbr_tour++;
     usleep(tps_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
-    if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= time(NULL))       /* Toutes les minutes + Init */
-     { agent->telemetrie_next_update = time(NULL) + 60;
+    if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= now )             /* Toutes les minutes + Init */
+     { agent->telemetrie_next_update = now + 600;
        struct rusage conso;
        getrusage ( RUSAGE_SELF, &conso );
        Mqtt_Send_AI ( agent, agent->ai_max_rss, (gdouble)conso.ru_maxrss, TRUE );
