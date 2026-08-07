@@ -31,6 +31,7 @@
  #include <abls-libs/abls-libs.h>
 
  extern void Thread_exec ( struct ABLS_AGENT *agent, gchar *name, const gchar *format, ... );
+ extern void Thread_run_detached ( gchar *name, gpointer (*Thread_function)(gpointer user_data), gpointer user_data );
 
 #endif /* _ABLS_AGENT_LIBS_THREAD_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

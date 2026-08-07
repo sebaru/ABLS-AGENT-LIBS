@@ -82,4 +82,13 @@
     agent->Thread = g_thread_new ( name, Thread_exec_queue, agent );
     g_rw_lock_writer_unlock ( &agent->Thread_lock );
   }
+/******************************************************************************************************************************/
+/* Thread_run: lance un thread en mode detaché                                                                                */
+/* Entree: structure agent, le nom du thread, la fonction                                                                     */
+/* Sortie: aucune                                                                                                             */
+/******************************************************************************************************************************/
+ void Thread_run_detached ( gchar *name, gpointer (*Thread_function)(gpointer user_data), gpointer user_data )
+  { if (!name || !Thread_function) return;
+    g_thread_unref ( g_thread_new ( name, Thread_function, user_data ) );
+  }
 /*----------------------------------------------------------------------------------------------------------------------------*/
