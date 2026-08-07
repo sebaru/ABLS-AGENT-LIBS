@@ -54,7 +54,8 @@
 
  struct ABLS_AGENT
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
-    gboolean is_debian;                                                          /* TRUE if the underlying OS is Debian-based */
+    gboolean is_dnf;                                                             /* TRUE if the underlying OS is Debian-based */
+    gboolean is_apt;                                                             /* TRUE if the underlying OS is Debian-based */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
     gchar **argv;
     struct ABLS_MQTT *mqtt_local;
@@ -82,7 +83,9 @@
 
     struct itimerval timer;
     guint Top;                                                                                          /* dixième de seconde */
-
+    GThread *Thread;                                                                        /* Thread de la boucle principale */
+    GRWLock Thread_lock;                                                          /* Synchronisation reader/writer de Thread */
+    GAsyncQueue *Thread_queue;
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
 

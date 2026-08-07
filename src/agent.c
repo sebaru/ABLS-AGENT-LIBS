@@ -152,15 +152,18 @@
     Agent_enable_signals ( agent );
 
 /*----------------------------------------------- Check de l'OS sous jacent --------------------------------------------------*/
-    GKeyFile *keyfile = g_key_file_new();
-    if (g_key_file_load_from_file(keyfile, "/etc/os-release", G_KEY_FILE_NONE, NULL))
-     { gchar *id = g_key_file_get_string(keyfile, "ID", NULL, NULL);
-        if (id != NULL)
-         { agent->is_debian = g_str_has_prefix(id, "debian") || g_str_has_prefix(id, "ubuntu");
-           g_free(id);
-         }
-        g_key_file_free(keyfile);
-     }
+    gchar *path_dnf = g_find_program_in_path ( "dnf" );
+    agent->is_dnf = (path_dnf != NULL);
+    g_free ( path_dnf );
+
+    gchar *path_apt = g_find_program_in_path ( "apt" );
+    agent->is_apt = (path_apt != NULL);
+    g_free ( path_apt );
+
+/*----------------------------------------------- Init du contexte Thread ----------------------------------------------------*/
+    g_rw_lock_init ( &agent->Thread_lock );
+    agent->Thread_queue = g_async_queue_new_full(g_free);                /* Création de la queue de messages pour les threads */
+    agent->Thread = NULL;
 
 /*------------------------------------------------- Chargement de la config par défaut ---------------------------------------*/
     agent->local_config = Json_create();
@@ -223,7 +226,6 @@
         { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
      }
 
-
     agent->argc          = argc;
     agent->argv          = argv;
     agent->agent_classe  = agent_classe;
@@ -243,9 +245,6 @@
     gchar *upper_name = g_ascii_strup ( chaine, -1 );
     prctl(PR_SET_NAME, upper_name, 0, 0, 0 );
     g_free(upper_name);
-
-#warning need Drop_priv
-/*    mkdir ( agent->agent_classe, S_IRUSR | S_IWUSR | S_IXUSR );*/
 
     if (sizeof_vars)
      { agent->vars = g_try_malloc0 ( sizeof_vars );
@@ -345,6 +344,8 @@
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
+    g_thread_join ( agent->Thread );
+    g_async_queue_unref ( agent->Thread_queue );
     if (agent->vars) { g_free(agent->vars); }
     Json_unref ( agent->IOs );
   }

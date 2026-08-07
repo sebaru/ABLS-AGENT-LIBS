@@ -45,12 +45,13 @@ add_library(abls-agent-libs SHARED
   src/mqtt_local.c
   src/mnemonique.c
   src/dls.c
+  src/thread.c
 )
 
 set_target_properties(abls-agent-libs PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
-  PUBLIC_HEADER "include/abls-agent-libs.h;include/agent.h;include/http.h;include/mqtt_api.h;include/mqtt_local.h;include/mnemonique.h;include/dls.h"
+  PUBLIC_HEADER "include/abls-agent-libs.h;include/agent.h;include/http.h;include/mqtt_api.h;include/mqtt_local.h;include/mnemonique.h;include/dls.h;include/thread.h"
 )
 
 target_include_directories(abls-agent-libs

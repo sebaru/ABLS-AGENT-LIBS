@@ -1,10 +1,10 @@
 /******************************************************************************************************************************/
-/* include/abls-agent-libs.h   Header parapluie — abls-agent-libs                                                             */
-/* Projet Abls-Habitat                               Gestion d'habitat                                       03.07.2026       */
+/* include/thread.h    API de queue thread pour ABLS agents                                                                   */
+/* Projet Abls-Habitat                               Gestion d'habitat                                       07.08.2026       */
 /* Auteur: LEFEVRE Sebastien                                                                                                  */
 /******************************************************************************************************************************/
 /*
- * abls-agent-libs.h
+ * thread.h
  * This file is part of Abls-Habitat
  *
  * Copyright (C) 1988-2026 - Sebastien LEFEVRE
@@ -25,18 +25,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef _ABLS_AGENT_LIBS_H_
- #define _ABLS_AGENT_LIBS_H_
+#ifndef _ABLS_AGENT_LIBS_THREAD_H_
+ #define _ABLS_AGENT_LIBS_THREAD_H_
 
  #include <abls-libs/abls-libs.h>
 
- #include "agent.h"
- #include "http.h"
- #include "mqtt_api.h"
- #include "mqtt_local.h"
- #include "mnemonique.h"
- #include "dls.h"
- #include "thread.h"
+ extern void Thread_exec ( struct ABLS_AGENT *agent, gchar *name, const gchar *format, ... );
 
-#endif /* _ABLS_AGENT_LIBS_H_ */
+#endif /* _ABLS_AGENT_LIBS_THREAD_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
