@@ -29,6 +29,15 @@
  #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
+/* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                     */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
+/******************************************************************************************************************************/
+ JsonNode *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent )
+  { if (!agent || !agent->mqtt_local) return(NULL);
+    return ( Mqtt_get_message ( agent->mqtt_local ) );
+  }
+/******************************************************************************************************************************/
 /* Mqtt_Send_AI: Envoie le bit AI au master                                                                                   */
 /* Entrée: la structure ABLS_AGENT, l'AI, la valeur et le range                                                               */
 /* Sortie: néant                                                                                                              */

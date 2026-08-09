@@ -39,14 +39,6 @@
 /**************************************************** Prototypes de fonctions *************************************************/
  #include "abls-agent-libs.h"
 
-/* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                     */
-/* Entrée: La structure afférente                                                                                             */
-/* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
-/******************************************************************************************************************************/
- JsonNode *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent )
-  { if (!agent || !agent->mqtt_local) return(NULL);
-    return ( Mqtt_get_message ( agent->mqtt_local ) );
-  }
 /******************************************************************************************************************************/
 /* Agent_send_comm_to_master: Envoi le statut de la comm au master                                                            */
 /* Entrée: La structure afférente                                                                                             */
@@ -303,6 +295,9 @@
                                  Json_get_int ( agent->api_config, "mqtt_qos" )
                                );
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/UPGRADE", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/RESTART", agent->domain_uuid, agent->agent_tech_id );
+    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/STOP", agent->domain_uuid, agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
     Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
 

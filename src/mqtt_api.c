@@ -32,6 +32,59 @@
  #include "abls-agent-libs.h"
 
 /******************************************************************************************************************************/
+/* Agent_is_ready: appelé au demarrage lorsque l'agent est pret                                                               */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ static gpointer Agent_stop_thread ( gpointer user_data )
+  { struct ABLS_AGENT *Agent = user_data;
+    Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Stopping by API." );
+
+    if ( g_strcmp0 ( Agent->agent_classe, "server" ) == 0 )
+     { Run_shell ( "sudo -n systemctl disable %s", Agent->agent_classe );
+       Run_shell_detached ( "sudo -n systemctl stop %s", Agent->agent_classe );
+     }
+    else
+     { Run_shell ( "sudo -n systemctl disable %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+       Run_shell_detached ( "sudo -n systemctl stop %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+     }
+    return(NULL);
+  }
+/******************************************************************************************************************************/
+/* Agent_restart_thread: redémarre l'agent                                                                                   */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ static gpointer Agent_restart_thread ( gpointer user_data )
+  { struct ABLS_AGENT *Agent = user_data;
+    Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Restarting." );
+
+    if ( g_strcmp0 ( Agent->agent_classe, "server" ) == 0 )
+     { Run_shell ( "sudo -n systemctl enable %s", Agent->agent_classe );
+       Run_shell_detached ( "sudo -n systemctl restart %s", Agent->agent_classe );
+     }
+    else
+     { Run_shell ( "sudo -n systemctl enable %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+       Run_shell_detached ( "sudo -n systemctl restart %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+     }
+    return(NULL);
+  }
+/******************************************************************************************************************************/
+/* Agent_is_ready: appelé au demarrage lorsque l'agent est pret                                                               */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ static gpointer Agent_upgrade_thread ( gpointer user_data )
+  { struct ABLS_AGENT *Agent = user_data;
+    Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Upgrade starting" );
+
+    Run_shell ( "sudo -n %s %s -y %s", (Agent->is_apt ? "apt" : "dnf"), (Agent->is_apt ? "update" : "upgrade"), Agent->agent_classe );
+    Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Upgrade Finished" );
+
+    Agent_restart_thread ( Agent );
+    return(NULL);
+  }
+/******************************************************************************************************************************/
 /* Agent_get_mqtt_api_message: Dépile un message de la queue MQTT API (non-bloquant)                                          */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */
@@ -54,6 +107,12 @@
              if (facility) Info_undebug_facility ( agent->agent_tech_id, facility );
            }
         }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "STOP" ) )
+        { Run_thread_detached ( "Stopping agent", Agent_stop_thread, agent ); }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "RESTART" ) )
+        { Run_thread_detached ( "Restarting agent", Agent_restart_thread, agent ); }
+       else if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "UPGRADE" ) )
+        { Run_thread_detached ( "Upgrading agent", Agent_upgrade_thread, agent ); }
        else return ( api_message );                                      /* Transfert directement pour traitement par l'agent */
      }
     Json_unref ( api_message );                       /* Message traité en pre-emption par la librairie, on libère la mémoire */
