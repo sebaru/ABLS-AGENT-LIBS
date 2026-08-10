@@ -46,7 +46,7 @@
      }
     else
      { Run_shell ( "sudo -n systemctl disable abls-agent-%s@%s", Agent->agent_classe, Agent->agent_tech_id );
-       Run_shell_detached ( "sudo -n systemctl stop %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+       Run_shell_detached ( "sudo -n systemctl stop abls-agent-%s@%s", Agent->agent_classe, Agent->agent_tech_id );
      }
     return(NULL);
   }
