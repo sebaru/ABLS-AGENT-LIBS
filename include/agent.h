@@ -83,10 +83,6 @@
 
     struct itimerval timer;
     guint Top;                                                                                          /* dixième de seconde */
-
-    GThread     *Thread_shell;                                                              /* Thread de la boucle principale */
-    GRWLock      Thread_shell_lock;                                    /* Synchronisation reader/writer de Thread_shell_queue */
-    GAsyncQueue *Thread_shell_queue;
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
 
