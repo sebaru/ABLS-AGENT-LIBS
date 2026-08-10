@@ -41,11 +41,11 @@
     Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Stopping by API." );
 
     if ( g_strcmp0 ( Agent->agent_classe, "server" ) == 0 )
-     { Run_shell ( "sudo -n systemctl disable %s", Agent->agent_classe );
-       Run_shell_detached ( "sudo -n systemctl stop %s", Agent->agent_classe );
+     { Run_shell ( "sudo -n systemctl disable abls-agent-%s", Agent->agent_classe );
+       Run_shell_detached ( "sudo -n systemctl stop abls-agent-%s", Agent->agent_classe );
      }
     else
-     { Run_shell ( "sudo -n systemctl disable %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+     { Run_shell ( "sudo -n systemctl disable abls-agent-%s@%s", Agent->agent_classe, Agent->agent_tech_id );
        Run_shell_detached ( "sudo -n systemctl stop %s@%s", Agent->agent_classe, Agent->agent_tech_id );
      }
     return(NULL);
@@ -60,12 +60,12 @@
     Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Restarting." );
 
     if ( g_strcmp0 ( Agent->agent_classe, "server" ) == 0 )
-     { Run_shell ( "sudo -n systemctl enable %s", Agent->agent_classe );
-       Run_shell_detached ( "sudo -n systemctl restart %s", Agent->agent_classe );
+     { Run_shell ( "sudo -n systemctl enable abls-agent-%s", Agent->agent_classe );
+       Run_shell_detached ( "sudo -n systemctl restart abls-agent-%s", Agent->agent_classe );
      }
     else
-     { Run_shell ( "sudo -n systemctl enable %s@%s", Agent->agent_classe, Agent->agent_tech_id );
-       Run_shell_detached ( "sudo -n systemctl restart %s@%s", Agent->agent_classe, Agent->agent_tech_id );
+     { Run_shell ( "sudo -n systemctl enable abls-agent-%s@%s", Agent->agent_classe, Agent->agent_tech_id );
+       Run_shell_detached ( "sudo -n systemctl restart abls-agent-%s@%s", Agent->agent_classe, Agent->agent_tech_id );
      }
     return(NULL);
   }
@@ -78,7 +78,7 @@
   { struct ABLS_AGENT *Agent = user_data;
     Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Upgrade starting" );
 
-    Run_shell ( "sudo -n %s %s -y %s", (Agent->is_apt ? "apt" : "dnf"), (Agent->is_apt ? "update" : "upgrade"), Agent->agent_classe );
+    Run_shell ( "sudo -n %s %s -y abls-agent-%s", (Agent->is_apt ? "apt" : "dnf"), (Agent->is_apt ? "update" : "upgrade"), Agent->agent_classe );
     Info( __func__, Agent->agent_classe, Agent->agent_tech_id, LOG_NOTICE, "Upgrade Finished" );
 
     Agent_restart_thread ( Agent );
