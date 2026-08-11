@@ -179,6 +179,7 @@
     Config_add_parameter ( "tps",           "TPS",     "Tour par seconde",  CONFIG_INT );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
+    Config_add_parameter ( "standalone",    NULL,      "Standalone mode, disable API", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
@@ -187,28 +188,30 @@
        Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
      }
 
-    if (!Json_has_member( agent->local_config, "api_url" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
-     }
+    agent->standalone = Json_get_bool ( agent->local_config, "standalone" );
+    if ( agent->standalone == FALSE )
+     { if (!Json_has_member( agent->local_config, "api_url" ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
+         Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+        }
 
-    if (!Json_has_member( agent->local_config, "server_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', creating one." );
-       gchar server_uuid[37];  /* UUID is 36 characters + null terminator */
-       UUID_New ( (gchar *)&server_uuid );
-       Json_add_string ( agent->local_config, "server_uuid", server_uuid );
-     }
+       if (!Json_has_member( agent->local_config, "server_uuid" ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'server_uuid', creating one." );
+          gchar server_uuid[37];  /* UUID is 36 characters + null terminator */
+          UUID_New ( (gchar *)&server_uuid );
+          Json_add_string ( agent->local_config, "server_uuid", server_uuid );
+        }
 
-    if (!Json_has_member( agent->local_config, "domain_uuid" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
-     }
+       if (!Json_has_member( agent->local_config, "domain_uuid" ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
+          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+        }
 
-    if (!Json_has_member( agent->local_config, "domain_secret" ))
-     { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
-     }
-
+       if (!Json_has_member( agent->local_config, "domain_secret" ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
+          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+        }
+      }
 /*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
     if (Json_get_bool ( agent->local_config, "save" ))
      { Json_remove ( agent->local_config, "save" );
@@ -225,6 +228,7 @@
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
+    agent->standalone    = Json_get_bool   ( agent->local_config, "standalone" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
@@ -244,57 +248,58 @@
         }
      }
 /*----------------------------------------- Connexion API pour récupérer la config distante ----------------------------------*/
-    JsonNode *RootNode = Json_create();
-    if (RootNode)
-     { Json_add_string ( RootNode, "agent_classe",   agent->agent_classe );
+    if ( agent->standalone == FALSE )
+     { JsonNode *RootNode = Json_create();
+       if (!RootNode)
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for POST_CONFIG, exiting." );
+          Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
+        }
+       Json_add_string ( RootNode, "agent_classe",   agent->agent_classe );
        Json_add_string ( RootNode, "agent_tech_id",  agent->agent_tech_id );
        Json_add_string ( RootNode, "version",        agent_version );
        Json_add_int    ( RootNode, "start_time",     time(NULL) );
        agent->api_config = Http_Post_to_global_API ( agent, "/run/agent/config", RootNode );
        Json_unref ( RootNode );
-     }
-    else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for POST_CONFIG, exiting." );
-       Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
-     }
 
-    if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
-     { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) );
-       agent->Agent_run = TRUE;
-     }
-    else
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
-       Agent_end ( agent );
-     }
+       if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
+        { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) );
+          agent->Agent_run = TRUE;
+        }
+       else
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
+          Agent_end ( agent );
+        }
 
-    if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "Agent disabled in API config. Unloading." );
-       Agent_end ( agent );
+       if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
+        { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "Agent disabled in API config. Unloading." );
+          Agent_end ( agent );
+        }
+
+       if (Json_has_member ( agent->api_config, "log_facilities" ))
+        { Info_set_facilities ( agent->agent_tech_id, agent->api_config, "log_facilities" ); }
      }
-
-    if (Json_has_member ( agent->api_config, "log_facilities" ))
-     { Info_set_facilities ( agent->agent_tech_id, agent->api_config, "log_facilities" ); }
-
     Json_to_log ( "api_config", agent->agent_tech_id, agent->api_config );                                    /* Print config */
 
 /*------------------------------------------------------ Ecoute du MQTT ------------------------------------------------------*/
     gchar mqtt_username[64];
-    g_snprintf ( mqtt_username, sizeof(mqtt_username), "%s-agent", agent->domain_uuid );
-    agent->mqtt_api = Mqtt_init( "mqtt_api", agent->agent_tech_id, agent->agent_tech_id,
-                                 Json_get_bool ( agent->api_config, "mqtt_over_ssl" ),
-                                 Json_get_string ( agent->local_config, "mqtt_ca_file" ),
-                                 Json_get_string ( agent->local_config, "mqtt_ca_path" ),
-                                 mqtt_username, Json_get_string ( agent->api_config, "mqtt_password" ),
-                                 Json_get_string ( agent->api_config, "mqtt_hostname" ),
-                                 Json_get_int ( agent->api_config, "mqtt_port" ),
-                                 Json_get_int ( agent->api_config, "mqtt_qos" )
-                               );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/UPGRADE", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/RESTART", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/STOP", agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
-    Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
+    if (agent->standalone == FALSE)
+     { g_snprintf ( mqtt_username, sizeof(mqtt_username), "%s-agent", agent->domain_uuid );
+       agent->mqtt_api = Mqtt_init( "mqtt_api", agent->agent_tech_id, agent->agent_tech_id,
+                                    Json_get_bool ( agent->api_config, "mqtt_over_ssl" ),
+                                    Json_get_string ( agent->local_config, "mqtt_ca_file" ),
+                                    Json_get_string ( agent->local_config, "mqtt_ca_path" ),
+                                    mqtt_username, Json_get_string ( agent->api_config, "mqtt_password" ),
+                                    Json_get_string ( agent->api_config, "mqtt_hostname" ),
+                                    Json_get_int ( agent->api_config, "mqtt_port" ),
+                                    Json_get_int ( agent->api_config, "mqtt_qos" )
+                                  );
+       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
+       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/UPGRADE", agent->domain_uuid, agent->agent_tech_id );
+       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/RESTART", agent->domain_uuid, agent->agent_tech_id );
+       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/STOP", agent->domain_uuid, agent->agent_tech_id );
+       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
+       Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
+     }
 
     agent->mqtt_local = Mqtt_init( "mqtt_local", agent->agent_tech_id, agent->agent_tech_id,
                                    Json_get_bool ( agent->local_config, "mqtt_over_ssl" ),
@@ -309,7 +314,7 @@
     Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
-  if (Dls_create_agent_plugin( agent ) == FALSE)
+  if ( agent->standalone == FALSE && Dls_create_agent_plugin( agent ) == FALSE)
      { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", agent->agent_tech_id ); }
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */

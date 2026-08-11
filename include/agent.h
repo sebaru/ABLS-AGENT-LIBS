@@ -56,6 +56,7 @@
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
     gboolean is_dnf;                                                             /* TRUE if the underlying OS is Debian-based */
     gboolean is_apt;                                                             /* TRUE if the underlying OS is Debian-based */
+    gboolean standalone;                                                   /* TRUE if the agent is running in standalone mode */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
     gchar **argv;
     struct ABLS_MQTT *mqtt_local;
