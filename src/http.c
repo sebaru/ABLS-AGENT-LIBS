@@ -175,6 +175,11 @@ end:
   { JsonNode *ReponseNode = NULL;
     gchar *payload = NULL;
 
+    if (agent->standalone)
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Standalone mode, API disabled", uri );
+       return(NULL);
+     }
+
     gchar url[256];
     if (uri) g_snprintf( url, sizeof(url), "https://%s%s", agent->api_url, uri );
         else g_snprintf( url, sizeof(url), "https://%s", agent->api_url );
@@ -230,6 +235,11 @@ end:
  JsonNode *Http_Get_from_global_API ( struct ABLS_AGENT *agent, gchar *URI, gchar *format, ... )
   { gchar url[512];
     va_list ap;
+
+    if (agent->standalone)
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Standalone mode, API disabled", URI );
+       return(NULL);
+     }
 
     if (format)
      { gchar parametres[128];

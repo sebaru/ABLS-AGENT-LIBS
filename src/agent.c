@@ -178,8 +178,9 @@
     Config_add_parameter ( "api-url",       "URL",     "URL de l'API",      CONFIG_STRING );
     Config_add_parameter ( "tps",           "TPS",     "Tour par seconde",  CONFIG_INT );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
+    Config_add_parameter ( "standalone",    NULL,      "Standalone mode, API disabled", CONFIG_FLAG );
+    Config_add_parameter ( "master_hostname", "HOSTNAME", "Master hostname in standalone mode", CONFIG_STRING );
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
-    Config_add_parameter ( "standalone",    NULL,      "Standalone mode, disable API", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
@@ -212,6 +213,13 @@
           Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
         }
       }
+
+    if ( agent->standalone == TRUE )
+     { if (!Json_has_member( agent->local_config, "master_hostname" ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'master_hostname', in config, exiting." );
+          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+        }
+     }
 /*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
     if (Json_get_bool ( agent->local_config, "save" ))
      { Json_remove ( agent->local_config, "save" );
@@ -228,7 +236,6 @@
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
-    agent->standalone    = Json_get_bool   ( agent->local_config, "standalone" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
@@ -306,7 +313,8 @@
                                    Json_get_string ( agent->local_config, "mqtt_ca_file" ),
                                    Json_get_string ( agent->local_config, "mqtt_ca_path" ),
                                    NULL, NULL, /* username/password */
-                                   Json_get_string ( agent->api_config, "master_hostname" ),
+                                   (agent->standalone ? Json_get_string ( agent->local_config, "master_hostname" )
+                                                      : Json_get_string ( agent->api_config,   "master_hostname" ) ),
                                    1883,
                                    1 /* "mqtt_qos */
                                  );
@@ -314,7 +322,7 @@
     Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
 
 /* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
-  if ( agent->standalone == FALSE && Dls_create_agent_plugin( agent ) == FALSE)
+  if ( agent->standalone == FALSE && Dls_create_agent_plugin( agent ) == FALSE )
      { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", agent->agent_tech_id ); }
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
