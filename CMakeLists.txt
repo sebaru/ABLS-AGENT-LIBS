@@ -121,8 +121,9 @@ set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY "Abls-Habitat satellite lifecycle library (d
 set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "abls-agent-libs = ${PROJECT_VERSION}, glib2-devel, json-glib-devel, libcurl-devel, abls-libs-devel")
 set(CPACK_RPM_DEVEL_FILE_NAME "abls-agent-libs-devel-${PROJECT_VERSION}-${CPACK_PACKAGE_RELEASE}.rpm")
 
+set(ABLS_DEBIAN_GLIB_RUNTIME_DEPEND "libglib2.0-0t64 | libglib2.0-0")
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "abls-agent-libs")
-set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libglib2.0-0, libjson-glib-1.0-0, libcurl4, abls-libs")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "${ABLS_DEBIAN_GLIB_RUNTIME_DEPEND}, libjson-glib-1.0-0, libcurl4, abls-libs")
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_SHLIBDEPS ON)
 
 set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "abls-agent-libs-dev")

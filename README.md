@@ -40,13 +40,24 @@ Produces runtime and devel RPM packages in `build/`.
 ## Packaging DEB
 
 ```sh
-./build_apt.sh --dist bookworm --no-sign
-./build_apt.sh --dist trixie --no-sign
+./build_apt.sh --dist bookworm
+./build_apt.sh --dist trixie
 ```
+
+Default target suite is detected from host OS codename (`/etc/os-release`), with `bookworm` fallback.
+
+Useful options:
+
+- `--version-suffix <s>`: override Debian version suffix (example `~trixie`)
+- `--no-dist-suffix`: disable automatic `~<suite>` suffix
 
 Produces runtime and dev DEB packages and copies normalized artifacts to:
 
 - `build/deb/<suite>/<arch>/`
+
+`build_apt.sh` builds only the native host architecture.
+
+Package signatures are centralized in ABLS-PKGS (both DEB repository metadata and RPM package/repository signatures).
 
 ## Release bump + publication
 
@@ -60,4 +71,4 @@ The release flow:
 - merges `trunk` into `main`
 - builds RPM + DEB packages
 - copies RPM to `../ABLS-PKGS/public/rpms/<arch>/`
-- copies DEB to `../ABLS-PKGS/deb-packages/<suite>/`
+- copies DEB to `../ABLS-PKGS/deb-packages/<suite>/<arch>/`
