@@ -97,6 +97,9 @@
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
  extern void               Agent_restart              ( struct ABLS_AGENT *agent );
+ extern gchar             *Agent_config_get_string    ( struct ABLS_AGENT *agent, gchar *name );
+ extern gboolean           Agent_config_get_bool      ( struct ABLS_AGENT *agent, gchar *name );
+ extern gint               Agent_config_get_int       ( struct ABLS_AGENT *agent, gchar *name );
  extern JsonNode          *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */
