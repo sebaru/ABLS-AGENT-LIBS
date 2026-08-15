@@ -83,8 +83,8 @@
 /******************************************************************************************************************************/
  static void Http_Add_signature ( struct ABLS_AGENT *agent, CURL *curl, gchar *payload )
   { struct curl_slist *all_headers = NULL;                                                        /* Gestion des headers HTTP */
-    gchar timestamp[20];                                                                 /* On récupère la date de la requete */
-    g_snprintf( timestamp, sizeof(timestamp), "%ld", time(NULL) );
+    gchar timestamp[32];                                                                 /* On récupère la date de la requete */
+    g_snprintf( timestamp, sizeof(timestamp), "%" G_GINT64_FORMAT, (gint64)time(NULL) );
 
 /*------------------------------------------------ Préparation des headers ---------------------------------------------------*/
     all_headers = curl_slist_append( all_headers, "Content-Type: application/json" );

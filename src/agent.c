@@ -383,4 +383,34 @@
     execvpe ( argv[0], argv, environ );                                                                      /* Restart agent */
     exit(0);
   }
+/******************************************************************************************************************************/
+/* Agent_config_get_string: récupère une configuration de type chaîne de caractères                                           */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ gchar *Agent_config_get_string ( struct ABLS_AGENT *agent, gchar *name )
+  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_string ( agent->api_config, name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_string ( agent->local_config, name ));
+    return(NULL);
+  }
+/******************************************************************************************************************************/
+/* Agent_config_get_bool: récupère une configuration de type booléen                                                          */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ gboolean Agent_config_get_bool ( struct ABLS_AGENT *agent, gchar *name )
+  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_bool ( agent->api_config, name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_bool ( agent->local_config, name ));
+    return(FALSE);
+  }
+/******************************************************************************************************************************/
+/* Agent_config_get_int: récupère une configuration de type entier                                                            */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ gint Agent_config_get_int ( struct ABLS_AGENT *agent, gchar *name )
+  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_int ( agent->api_config,   name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_int ( agent->local_config, name ));
+    return(0);
+  }
 /*----------------------------------------------------------------------------------------------------------------------------*/
