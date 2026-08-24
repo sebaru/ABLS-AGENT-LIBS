@@ -237,6 +237,7 @@
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
+    agent->Agent_run     = AGENT_IS_RUNNING;
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
     if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
@@ -269,9 +270,7 @@
        Json_unref ( RootNode );
 
        if (agent->api_config && Json_get_int ( agent->api_config, "http_code" ) == 200)
-        { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) );
-          agent->Agent_run = TRUE;
-        }
+        { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) ); }
        else
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
           Agent_end ( agent );
