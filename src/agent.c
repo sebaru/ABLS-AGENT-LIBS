@@ -412,4 +412,14 @@
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_int ( agent->local_config, name ));
     return(0);
   }
+/******************************************************************************************************************************/
+/* Agent_config_get_array: récupère une configuration de type tableau                                                        */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: le tableau                                                                                                         */
+/******************************************************************************************************************************/
+ JsonArray *Agent_config_get_array ( struct ABLS_AGENT *agent, gchar *name )
+  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_array ( agent->api_config,   name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_array ( agent->local_config, name ));
+    return(NULL);
+  }
 /*----------------------------------------------------------------------------------------------------------------------------*/
