@@ -179,7 +179,7 @@
     Config_add_parameter ( "tps",           "TPS",     "Tour par seconde",  CONFIG_INT );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_add_parameter ( "standalone",    NULL,      "Standalone mode, API disabled", CONFIG_FLAG );
-    Config_add_parameter ( "master_hostname", "HOSTNAME", "Master hostname in standalone mode", CONFIG_STRING );
+    Config_add_parameter ( "master-hostname", "HOSTNAME", "Master hostname in standalone mode", CONFIG_STRING );
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 

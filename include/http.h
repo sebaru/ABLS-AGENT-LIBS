@@ -34,6 +34,7 @@
  extern void      Http_End                ( struct ABLS_AGENT *agent );
  extern JsonNode *Http_Post_to_global_API ( struct ABLS_AGENT *agent, gchar *uri, JsonNode *json_payload );
  extern JsonNode *Http_Get_from_global_API( struct ABLS_AGENT *agent, gchar *URI, gchar *format, ... );
+ extern JsonNode *Http_Get_external       ( struct ABLS_AGENT *agent, gchar *url );
 
 #endif /* _ABLS_AGENT_LIBS_HTTP_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

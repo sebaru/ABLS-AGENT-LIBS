@@ -212,6 +212,30 @@ end:
     return(ReponseNode);
   }
 /******************************************************************************************************************************/
+/* Http_Get_external: Réalise une requete GET vers une API tierce, sans signature ABLS                                        */
+/* Entrée: l'agent et l'url complete                                                                                          */
+/* Sortie: le noeud JSON de la réponse (avec son membre http_code), ou NULL si erreur                                         */
+/******************************************************************************************************************************/
+ JsonNode *Http_Get_external ( struct ABLS_AGENT *agent, gchar *url )
+  { if (!agent || !url) return(NULL);
+
+    CURL *curl = curl_easy_init();
+    if(!curl)
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Curl_easy_init failed", url );
+       return(NULL);
+     }
+
+    curl_easy_setopt( curl, CURLOPT_URL, url );
+    curl_easy_setopt( curl, CURLOPT_HTTPGET, 1L );
+    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
+    curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT, 10L );
+    curl_easy_setopt( curl, CURLOPT_TIMEOUT, 15L );
+
+    JsonNode *ReponseNode = Http_Query ( agent, url, curl );                                            /* Réalise la requete */
+    curl_easy_cleanup(curl);
+    return(ReponseNode);
+  }
+/******************************************************************************************************************************/
 /* Http_Query_to_cache: transforme une query en nom de fichier cache                                                          */
 /* Entrée: la query                                                                                                           */
 /* Sortie: le cache filename                                                                                                  */
