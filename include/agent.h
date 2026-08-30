@@ -31,8 +31,6 @@
  #include <signal.h>
  #include <sys/time.h>
 
- #define ABLS_AGENT_CONFIG_FILE "/etc/abls-agent.conf"
-
  enum { AGENT_ARCHIVE_NONE,
         AGENT_ARCHIVE_5_SEC,
         AGENT_ARCHIVE_1_MIN,
@@ -56,6 +54,7 @@
   { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
     gboolean is_dnf;                                                             /* TRUE if the underlying OS is Debian-based */
     gboolean is_apt;                                                             /* TRUE if the underlying OS is Debian-based */
+    gboolean systemd_is_user;                                    /* TRUE si l'agent tourne dans une session systemd --user */
     gboolean standalone;                                                   /* TRUE if the agent is running in standalone mode */
     gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
     gchar **argv;
@@ -100,6 +99,7 @@
  extern gchar             *Agent_config_get_string    ( struct ABLS_AGENT *agent, gchar *name );
  extern gboolean           Agent_config_get_bool      ( struct ABLS_AGENT *agent, gchar *name );
  extern gint               Agent_config_get_int       ( struct ABLS_AGENT *agent, gchar *name );
+ extern JsonArray         *Agent_config_get_array     ( struct ABLS_AGENT *agent, gchar *name );
  extern JsonNode          *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */

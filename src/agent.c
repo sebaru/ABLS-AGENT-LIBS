@@ -170,7 +170,7 @@
 
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
-    Config_apply_FILE ( agent->local_config, ABLS_AGENT_CONFIG_FILE );                               /* Apply file parameters */
+    Config_apply_FILE ( agent->local_config, "/etc/abls-agent.conf" );                               /* Apply file parameters */
     Config_add_parameter ( "domain-uuid",   "UUID",    "UUID du domaine",   CONFIG_STRING );
     Config_add_parameter ( "domain-secret", "SECRET",  "Secret du domaine", CONFIG_STRING );
     Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
@@ -179,16 +179,21 @@
     Config_add_parameter ( "tps",           "TPS",     "Tour par seconde",  CONFIG_INT );
     Config_add_parameter ( "dry-run",       NULL,      "Do not really send Inputs or outputs", CONFIG_FLAG );
     Config_add_parameter ( "standalone",    NULL,      "Standalone mode, API disabled", CONFIG_FLAG );
-    Config_add_parameter ( "master_hostname", "HOSTNAME", "Master hostname in standalone mode", CONFIG_STRING );
+    Config_add_parameter ( "master-hostname", "HOSTNAME", "Master hostname in standalone mode", CONFIG_STRING );
     Config_add_parameter ( "save",          NULL,      "Save local configuration to default config file", CONFIG_FLAG );
     Config_apply_ARGV ( agent->local_config, argc, argv );                                           /* Apply ARGV parameters */
 
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
-       Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
+    agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
+    gchar config_file_with_tech_id[64];
+    g_snprintf ( config_file_with_tech_id, sizeof(config_file_with_tech_id), "/etc/abls-agent-%s.conf", agent->agent_tech_id );
+    Config_apply_FILE_if_missing ( agent->local_config, config_file_with_tech_id );                  /* Apply file parameters */
 
+/*------------------------------------------------- If standalone mode -------------------------------------------------------*/
     agent->standalone = Json_get_bool ( agent->local_config, "standalone" );
     if ( agent->standalone == FALSE )
      { if (!Json_has_member( agent->local_config, "api_url" ))
@@ -223,14 +228,12 @@
 /*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
     if (Json_get_bool ( agent->local_config, "save" ))
      { Json_remove ( agent->local_config, "save" );
-
-       if (!Json_write_to_file ( ABLS_AGENT_CONFIG_FILE, agent->local_config ))
-        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+       if (!Json_write_to_file ( config_file_with_tech_id, agent->local_config ))
+        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", config_file_with_tech_id ); }
        else
-        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", ABLS_AGENT_CONFIG_FILE ); }
+        { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", config_file_with_tech_id ); }
      }
 
-    agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
     agent->server_uuid   = Json_get_string ( agent->local_config, "server_uuid" );
     agent->domain_uuid   = Json_get_string ( agent->local_config, "domain_uuid" );
@@ -238,6 +241,8 @@
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     agent->Agent_run     = AGENT_IS_RUNNING;
+    agent->systemd_is_user = (g_getenv ( "XDG_RUNTIME_DIR" ) != NULL);
+
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
     if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
@@ -411,5 +416,15 @@
   { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_int ( agent->api_config,   name ));
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_int ( agent->local_config, name ));
     return(0);
+  }
+/******************************************************************************************************************************/
+/* Agent_config_get_array: récupère une configuration de type tableau                                                        */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: le tableau                                                                                                         */
+/******************************************************************************************************************************/
+ JsonArray *Agent_config_get_array ( struct ABLS_AGENT *agent, gchar *name )
+  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_array ( agent->api_config,   name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_array ( agent->local_config, name ));
+    return(NULL);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
