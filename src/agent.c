@@ -28,7 +28,6 @@
  #define _GNU_SOURCE
  #include <sys/stat.h>
  #include <sys/prctl.h>
- #include <sys/resource.h>
  #include <unistd.h>
  #include <stdlib.h>
  #include <locale.h>
@@ -74,6 +73,28 @@
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "%s", status );
   }
 /******************************************************************************************************************************/
+/* Agent_get_memory_usage: Lit l'usage mémoire du processus dans procfs                                                       */
+/* Entrée: pointeurs de sortie pour la mémoire virtuelle et la RSS, en kB                                                     */
+/* Sortie: TRUE si la mesure est disponible                                                                                   */
+/******************************************************************************************************************************/
+ static gboolean Agent_get_memory_usage ( gdouble *virt_mem, gdouble *rss_mem )
+  { FILE *statm = fopen ( "/proc/self/statm", "r" );
+    unsigned long virt_pages;
+    unsigned long rss_pages;
+    long page_size;
+
+    if (!statm) return(FALSE);
+    gboolean retour = fscanf ( statm, "%lu %lu", &virt_pages, &rss_pages ) == 2;
+    fclose ( statm );
+    if (!retour) return(FALSE);
+
+    page_size = sysconf ( _SC_PAGESIZE );
+    if (page_size <= 0) return(FALSE);
+    *virt_mem = (gdouble)virt_pages * page_size / 1024.0;
+    *rss_mem = (gdouble)rss_pages * page_size / 1024.0;
+    return(TRUE);
+  }
+/******************************************************************************************************************************/
 /* Agent_loop: S'occupe de la telemetrie, de la comm périodique, de la vitesse de rotation                                    */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: aucune                                                                                                             */
@@ -99,9 +120,12 @@
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= now )             /* Toutes les minutes + Init */
      { agent->telemetrie_next_update = now + 600;
-       struct rusage conso;
-       getrusage ( RUSAGE_SELF, &conso );
-       Mqtt_Send_AI ( agent, agent->ai_max_rss, (gdouble)conso.ru_maxrss, TRUE );
+       gdouble virt_mem;
+       gdouble rss_mem;
+       if (Agent_get_memory_usage ( &virt_mem, &rss_mem ))
+        { Mqtt_Send_AI ( agent, agent->ai_rss_mem, rss_mem, TRUE );
+          Mqtt_Send_AI ( agent, agent->ai_virt_mem, virt_mem, TRUE );
+        }
        Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, 1.0*agent->tps_value, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
@@ -338,7 +362,8 @@
     Json_add_array ( agent->IOs, "IOs" );
 
     agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
-    agent->ai_max_rss          = Mnemo_create_AI ( agent, "MAX_RSS", "Maximum RSS", "kB", AGENT_ARCHIVE_5_MIN );
+    agent->ai_rss_mem          = Mnemo_create_AI ( agent, "RSS_MEM", "RSS", "kB", AGENT_ARCHIVE_5_MIN );
+    agent->ai_virt_mem         = Mnemo_create_AI ( agent, "VIRT_MEM", "Mémoire virtuelle", "kB", AGENT_ARCHIVE_5_MIN );
     agent->ai_log_par_min      = Mnemo_create_AI ( agent, "LOG_PAR_MIN", "Logs par minute", "logs/min", AGENT_ARCHIVE_1_MIN );
 
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
