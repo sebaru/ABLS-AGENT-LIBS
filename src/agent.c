@@ -266,7 +266,6 @@
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     agent->Agent_run     = AGENT_IS_RUNNING;
-    agent->systemd_is_user = (g_getenv ( "XDG_RUNTIME_DIR" ) != NULL);
 
     Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
 
