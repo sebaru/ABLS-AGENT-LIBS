@@ -214,7 +214,8 @@
      }
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     gchar config_file_with_tech_id[64];
-    g_snprintf ( config_file_with_tech_id, sizeof(config_file_with_tech_id), "/etc/abls-agent-%s.conf", agent->agent_tech_id );
+    g_snprintf ( config_file_with_tech_id, sizeof(config_file_with_tech_id),
+                 "/etc/abls-agent-%s-%s.conf", agent->agent_classe, agent->agent_tech_id );
     Config_apply_FILE_if_missing ( agent->local_config, config_file_with_tech_id );                  /* Apply file parameters */
 
 /*------------------------------------------------- If standalone mode -------------------------------------------------------*/
