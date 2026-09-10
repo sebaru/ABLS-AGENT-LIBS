@@ -235,12 +235,12 @@
 
        if (!Json_has_member( agent->local_config, "domain_uuid" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
-          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
         }
 
        if (!Json_has_member( agent->local_config, "domain_secret" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
-          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
         }
       }
 
@@ -252,13 +252,22 @@
      }
 /*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
     if (Json_get_bool ( agent->local_config, "save" ))
-     { Json_remove ( agent->local_config, "save" );
+     { if (getuid() != 0)                                                                      /* Must be root to save config */
+        { printf ( "Must be root to save config to %s.\n", config_file_with_tech_id );
+          Agent_end ( agent );
+        }
+       Json_remove ( agent->local_config, "save" );
        if (!Json_write_to_file ( config_file_with_tech_id, agent->local_config ))
-        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", config_file_with_tech_id ); }
+        { Info( __func__, agent_classe, NULL, LOG_ERR, "Unable to save local config to '%s'", config_file_with_tech_id );
+          printf ( "Unable to save local config to '%s'\n", config_file_with_tech_id );
+        }
        else
         { Info( __func__, agent_classe, NULL, LOG_NOTICE, "Local config saved to '%s'", config_file_with_tech_id );
-          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
+          Run_shell ( "chown root:abls %s", config_file_with_tech_id );
+          Run_shell ( "chmod 0640 %s", config_file_with_tech_id );
+          printf ( "Local config saved to '%s'\n", config_file_with_tech_id );
         }
+       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
 
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
