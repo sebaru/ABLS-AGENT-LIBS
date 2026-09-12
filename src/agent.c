@@ -210,6 +210,7 @@
 /*------------------------------------------------- Config control -----------------------------------------------------------*/
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
+       printf ( "There is no 'agent_tech_id', in config, exiting.\n" );
        Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
@@ -223,7 +224,7 @@
     if ( agent->standalone == FALSE )
      { if (!Json_has_member( agent->local_config, "api_url" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
-         Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
         }
 
        if (!Json_has_member( agent->local_config, "server_uuid" ))
