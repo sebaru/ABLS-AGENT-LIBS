@@ -31,15 +31,15 @@
  #include <signal.h>
  #include <sys/time.h>
 
- enum { AGENT_ARCHIVE_NONE,
-        AGENT_ARCHIVE_5_SEC,
-        AGENT_ARCHIVE_1_MIN,
-        AGENT_ARCHIVE_5_MIN,
-        AGENT_ARCHIVE_10_MIN,
-        AGENT_ARCHIVE_30_MIN,
-        AGENT_ARCHIVE_1_HEURE,
-        AGENT_ARCHIVE_6_HEURE,
-        AGENT_ARCHIVE_1_JOUR,
+ enum { AGENT_ARCHIVE_NONE    = 0,
+        AGENT_ARCHIVE_5_SEC   = 50,
+        AGENT_ARCHIVE_1_MIN   = 600,
+        AGENT_ARCHIVE_5_MIN   = 3000,
+        AGENT_ARCHIVE_10_MIN  = 6000,
+        AGENT_ARCHIVE_30_MIN  = 18000,
+        AGENT_ARCHIVE_1_HEURE = 36000,
+        AGENT_ARCHIVE_6_HEURE = 216000,
+        AGENT_ARCHIVE_1_JOUR  = 864000,
         NBR_AGENT_ARCHIVE
       };
 
