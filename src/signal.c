@@ -54,6 +54,9 @@
                      break;
        case SIGABRT: break;
        case SIGPIPE: break;
+       case SIGUSR1: Json_to_log ( "dumping_local_config", local_agent->agent_tech_id, local_agent->local_config );
+                     Json_to_log ( "dumping_api_config",   local_agent->agent_tech_id, local_agent->api_config   );
+                     break;
        default:      break;
      }
   }
@@ -79,6 +82,7 @@
     sigaction ( SIGTERM, &sig, NULL );
     sigaction ( SIGABRT, &sig, NULL );
     sigaction ( SIGPIPE, &sig, NULL );
+    sigaction ( SIGUSR1, &sig, NULL );
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO, "Signal handlers installed" );
 
 /****************************************************** Démarrage du timer ****************************************************/
@@ -102,11 +106,13 @@
     sig.sa_flags = SA_RESTART;
     sigemptyset ( &sig.sa_mask );
 
+    sigaction ( SIGALRM, &sig, NULL );
     sigaction ( SIGQUIT, &sig, NULL );
     sigaction ( SIGINT,  &sig, NULL );
     sigaction ( SIGTERM, &sig, NULL );
     sigaction ( SIGABRT, &sig, NULL );
     sigaction ( SIGPIPE, &sig, NULL );
+    sigaction ( SIGUSR1, &sig, NULL );
 
     Info( __func__, local_agent->agent_classe, local_agent->agent_tech_id, LOG_INFO, "Signal handlers disabled" );
 
