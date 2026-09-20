@@ -341,9 +341,6 @@
                                     Json_get_int ( agent->api_config, "mqtt_qos" )
                                   );
        Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/TEST", agent->domain_uuid, agent->agent_tech_id );
-       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/UPGRADE", agent->domain_uuid, agent->agent_tech_id );
-       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/RESTART", agent->domain_uuid, agent->agent_tech_id );
-       Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/STOP", agent->domain_uuid, agent->agent_tech_id );
        Mqtt_subscribe ( agent->mqtt_api, "%s/AGENT/%s/LOG",  agent->domain_uuid, agent->agent_tech_id );
        Mqtt_last_will ( agent->mqtt_api, "{ \"status\": \"dead\" }", "%s/AGENT/%s/STATUS", agent->domain_uuid, agent->agent_tech_id );
      }
