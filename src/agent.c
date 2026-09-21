@@ -279,7 +279,7 @@
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
     agent->Agent_run     = AGENT_IS_RUNNING;
 
-    Json_to_log ( "local_config", agent->agent_tech_id, agent->local_config );                                /* Print config */
+    Json_to_log ( __func__, "local_config", agent->agent_tech_id, LOG_INFO, agent->local_config );            /* Print config */
 
     if (agent->dry_run) Info( __func__, agent_classe, agent->agent_tech_id, LOG_NOTICE, "Dry-run mode enabled." );
 
@@ -325,7 +325,7 @@
        if (Json_has_member ( agent->api_config, "log_facilities" ))
         { Info_set_facilities ( agent->agent_tech_id, agent->api_config, "log_facilities" ); }
      }
-    Json_to_log ( "api_config", agent->agent_tech_id, agent->api_config );                                    /* Print config */
+    Json_to_log ( __func__, "api_config", agent->agent_tech_id, LOG_INFO, agent->api_config );                /* Print config */
 
 /*------------------------------------------------------ Ecoute du MQTT ------------------------------------------------------*/
     gchar mqtt_username[64];
