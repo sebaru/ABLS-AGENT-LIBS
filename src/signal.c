@@ -54,8 +54,8 @@
                      break;
        case SIGABRT: break;
        case SIGPIPE: break;
-       case SIGUSR1: Json_to_log ( "dumping_local_config", local_agent->agent_tech_id, local_agent->local_config );
-                     Json_to_log ( "dumping_api_config",   local_agent->agent_tech_id, local_agent->api_config   );
+       case SIGUSR1: Json_to_log ( __func__, "dumping_local_config", local_agent->agent_tech_id, LOG_ALERT, local_agent->local_config );
+                     Json_to_log ( __func__, "dumping_api_config",   local_agent->agent_tech_id, LOG_ALERT, local_agent->api_config   );
                      break;
        default:      break;
      }
