@@ -358,10 +358,6 @@
     Mqtt_subscribe ( agent->mqtt_local, "SET_AO/%s/#", agent->agent_tech_id );
     Mqtt_subscribe ( agent->mqtt_local, "SET_DO/%s/#", agent->agent_tech_id );
 
-/* ----------------------------------------- Création du plugin D.L.S de l'agent -------------------------------------------- */
-  if ( agent->standalone == FALSE && Dls_create_agent_plugin( agent ) == FALSE )
-     { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ERR, "DLS Create ERROR for '%s'", agent->agent_tech_id ); }
-
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
     agent->IOs = Json_create();
     Json_add_array ( agent->IOs, "IOs" );

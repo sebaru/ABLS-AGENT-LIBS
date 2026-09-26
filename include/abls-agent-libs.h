@@ -35,7 +35,6 @@
  #include "mqtt_api.h"
  #include "mqtt_local.h"
  #include "mnemonique.h"
- #include "dls.h"
 
 #endif /* _ABLS_AGENT_LIBS_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
