@@ -565,6 +565,16 @@
     return(agent->agent_classe);
   }
 
+ gchar *Agent_get_server_uuid ( struct ABLS_AGENT *agent )
+  { if (!agent) return(NULL);
+    return(agent->server_uuid);
+  }
+
+ gchar *Agent_get_domain_uuid ( struct ABLS_AGENT *agent )
+  { if (!agent) return(NULL);
+    return(agent->domain_uuid);
+  }
+
  void *Agent_get_vars ( struct ABLS_AGENT *agent )
   { if (!agent) return(NULL);
     return(agent->vars);

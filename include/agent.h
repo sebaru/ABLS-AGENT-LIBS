@@ -76,6 +76,9 @@
 /*********************************************** Accesseurs à la structure opaque *********************************************/
  extern gchar             *Agent_get_tech_id          ( struct ABLS_AGENT *agent );
  extern gchar             *Agent_get_classe           ( struct ABLS_AGENT *agent );
+ extern gchar             *Agent_get_server_uuid      ( struct ABLS_AGENT *agent );
+ extern gchar             *Agent_get_domain_uuid      ( struct ABLS_AGENT *agent );
+ extern gchar             *Agent_get_api_url          ( struct ABLS_AGENT *agent );
  extern void              *Agent_get_vars             ( struct ABLS_AGENT *agent );
  extern guint              Agent_get_top              ( struct ABLS_AGENT *agent );
  extern gboolean           Agent_is_running           ( struct ABLS_AGENT *agent );
