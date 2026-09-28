@@ -30,7 +30,7 @@
  #include <curl/curl.h>
  #include <openssl/evp.h>
 
-/**************************************************** Prototypes de fonctions *************************************************/ #include "abls-agent-libs.h"
+/**************************************************** Prototypes de fonctions *************************************************/ #include "agent_private.h"
 
  struct HTTP_BUFFER
   { struct ABLS_AGENT *agent;
@@ -44,7 +44,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Http_Init ( struct ABLS_AGENT *agent )
-  { curl_global_init(CURL_GLOBAL_DEFAULT);
+  { if (!agent) return;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     g_mkdir ( "http_cache", 0755 );
     Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "lib cURL initialized" );
   }
@@ -54,7 +56,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Http_End ( struct ABLS_AGENT *agent )
-  { curl_global_cleanup();
+  { if (!agent) return;
+
+    curl_global_cleanup();
     Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "lib cURL un-initialized" );
   }
 /******************************************************************************************************************************/
@@ -82,7 +86,9 @@
 /* Sortie: aucune, les headers et signatures sont mis à jour dans le CURL                                                     */
 /******************************************************************************************************************************/
  static void Http_Add_signature ( struct ABLS_AGENT *agent, CURL *curl, gchar *payload )
-  { struct curl_slist *all_headers = NULL;                                                        /* Gestion des headers HTTP */
+  { if (!agent) return;
+
+    struct curl_slist *all_headers = NULL;                                                        /* Gestion des headers HTTP */
     gchar timestamp[32];                                                                 /* On récupère la date de la requete */
     g_snprintf( timestamp, sizeof(timestamp), "%" G_GINT64_FORMAT, (gint64)time(NULL) );
 
@@ -132,7 +138,9 @@
 /* Sortie : le noeud JSON de la réponse                                                                                       */
 /******************************************************************************************************************************/
  static JsonNode *Http_Query ( struct ABLS_AGENT *agent, gchar *url, CURL *curl )
-  { JsonNode *ReponseNode = NULL;
+  { if (!agent) return(NULL);
+
+    JsonNode *ReponseNode = NULL;
     gint http_code;
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
@@ -172,7 +180,9 @@ end:
 /* Sortie: la reponse json                                                                                                    */
 /******************************************************************************************************************************/
  JsonNode *Http_Post_to_global_API ( struct ABLS_AGENT *agent, gchar *uri, JsonNode *json_payload )
-  { JsonNode *ReponseNode = NULL;
+  { if (!agent) return(NULL);
+
+    JsonNode *ReponseNode = NULL;
     gchar *payload = NULL;
 
     if (agent->standalone)
@@ -241,7 +251,9 @@ end:
 /* Sortie: le cache filename                                                                                                  */
 /******************************************************************************************************************************/
  static gchar *Http_Query_to_cache ( struct ABLS_AGENT *agent, gchar *query )
-  { gint taille_nom_fichier = 256;
+  { if (!agent) return(NULL);
+
+    gint taille_nom_fichier = 256;
     gchar *nom_fichier = g_try_malloc0(taille_nom_fichier);
     if (!nom_fichier)
      { Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Memory error for Caching %s", query );
@@ -257,7 +269,9 @@ end:
 /* Sortie: le Json                                                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Http_Get_from_global_API ( struct ABLS_AGENT *agent, gchar *URI, gchar *format, ... )
-  { gchar url[512];
+  { if (!agent) return(NULL);
+
+    gchar url[512];
     va_list ap;
 
     if (agent->standalone)

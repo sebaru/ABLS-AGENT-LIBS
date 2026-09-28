@@ -31,7 +31,7 @@
  #include <signal.h>
  #include <sys/prctl.h>
 
- #include "abls-agent-libs.h"
+ #include "agent_private.h"
 
  static struct ABLS_AGENT *local_agent = NULL;
 

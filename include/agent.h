@@ -28,8 +28,10 @@
 #ifndef _ABLS_AGENT_LIBS_AGENT_H_
  #define _ABLS_AGENT_LIBS_AGENT_H_
 
- #include <signal.h>
  #include <sys/time.h>
+ #include <glib.h>
+ #include <json-glib/json-glib.h>
+ #include <abls-libs/abls-libs.h>
 
  enum { AGENT_ARCHIVE_NONE    = 0,
         AGENT_ARCHIVE_5_SEC   = 50,
@@ -49,44 +51,7 @@
         NBR_AGENT_STATUS,
       };
 
- struct ABLS_AGENT
-  { gboolean Agent_run;                                     /* TRUE si le thread tourne, FALSE pour lui demander de s'arreter */
-    gboolean is_dnf;                                                             /* TRUE if the underlying OS is Debian-based */
-    gboolean is_apt;                                                             /* TRUE if the underlying OS is Debian-based */
-    gboolean standalone;                                                   /* TRUE if the agent is running in standalone mode */
-    gint argc;                                                        /* Report des argc, argv pour permettre l'Agent_Restart */
-    gchar **argv;
-    struct ABLS_MQTT *mqtt_local;
-    struct ABLS_MQTT *mqtt_api;
-    JsonNode *local_config;                                                      /* Pointeur vers la config locale de l'agent */
-    JsonNode *api_config;                                                           /* Pointeur vers la config API de l'agent */
-    gchar *agent_tech_id;                                                                 /* Identifiant technique de l'agent */
-    gchar *agent_classe;                                                                                 /* Classe de l'agent */
-    gchar *server_uuid;                                                                                    /* UUID du serveur */
-    gchar *domain_uuid;                                                                                    /* UUID du domaine */
-    gchar *domain_secret;                                                                                /* Secret du domaine */
-    gchar *api_url;                                                                                           /* URL de l'API */
-    gboolean dry_run;                                                                 /* Do not really send Inputs or outputs */
-    gint     comm_status;                                                       /* Report local du status de la communication */
-    gint     comm_next_update;                                        /* Date du prochain update Watchdog COMM vers le master */
-    JsonNode *IOs;
-
-    guint tps_consigne;                                                                   /* nombre de tour par seconde cible */
-    guint tps_value;                                                                     /* nombre de tour par seconde actuel */
-
-    guint telemetrie_next_update;
-    JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
-    JsonNode *ai_rss_mem;                                                                                      /* RSS */
-    JsonNode *ai_virt_mem;                                                                                    /* Mémoire virtuelle */
-    JsonNode *ai_log_par_min;                                                                              /* Logs par minute */
-
-    GSList  *status_stack;                                   /* Pile LIFO des status de l'agent. La tete est le status publié */
-    GRWLock  status_stack_lock;
-
-    struct itimerval timer;
-    guint Top;                                                                                          /* dixième de seconde */
-    void *vars;                                                               /* Pointeur vers les variables de run du module */
-  };
+ struct ABLS_AGENT;         /* Type opaque : le layout est privé à abls-agent-libs, l'accès se fait via les helpers ci-dessous */
 
  extern struct ABLS_AGENT *Agent_init                 ( gchar *entete, gchar *agent_classe, gchar *agent_version, gint sizeof_vars,
                                                         gint argc, gchar **argv );
@@ -103,7 +68,19 @@
  extern gboolean           Agent_config_get_bool      ( struct ABLS_AGENT *agent, gchar *name );
  extern gint               Agent_config_get_int       ( struct ABLS_AGENT *agent, gchar *name );
  extern JsonArray         *Agent_config_get_array     ( struct ABLS_AGENT *agent, gchar *name );
+ extern guint              Agent_config_get_array_length ( struct ABLS_AGENT *agent, gchar *name );
+ extern void               Agent_config_foreach_array_element ( struct ABLS_AGENT *agent, gchar *name,
+                                                                JsonArrayForeach fonction, gpointer data );
  extern JsonNode          *Agent_get_mqtt_local_message ( struct ABLS_AGENT *agent );
+
+/*********************************************** Accesseurs à la structure opaque *********************************************/
+ extern gchar             *Agent_get_tech_id          ( struct ABLS_AGENT *agent );
+ extern gchar             *Agent_get_classe           ( struct ABLS_AGENT *agent );
+ extern void              *Agent_get_vars             ( struct ABLS_AGENT *agent );
+ extern guint              Agent_get_top              ( struct ABLS_AGENT *agent );
+ extern gboolean           Agent_is_running           ( struct ABLS_AGENT *agent );
+ extern gboolean           Agent_is_apt               ( struct ABLS_AGENT *agent );
+ extern gboolean           Agent_is_dnf               ( struct ABLS_AGENT *agent );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

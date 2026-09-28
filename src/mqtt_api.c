@@ -29,8 +29,25 @@
  #include <stdarg.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
- #include "abls-agent-libs.h"
+ #include "agent_private.h"
 
+/******************************************************************************************************************************/
+/* Agent_subscribe_mqtt_api: Souscrit à un topic sur le broker MQTT de l'API                                                  */
+/* Entrée: La structure afférente et le topic (variadique)                                                                    */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_subscribe_mqtt_api ( struct ABLS_AGENT *agent, gchar *format, ... )
+  { gchar topic[512];
+    va_list ap;
+
+    if (!agent || !agent->mqtt_api || !format) return;
+
+    va_start ( ap, format );
+    g_vsnprintf ( topic, sizeof(topic), format, ap );
+    va_end ( ap );
+
+    Mqtt_subscribe ( agent->mqtt_api, "%s", topic );
+  }
 /******************************************************************************************************************************/
 /* Agent_get_mqtt_api_message: Dépile un message de la queue MQTT API (non-bloquant)                                          */
 /* Entrée: La structure afférente                                                                                             */

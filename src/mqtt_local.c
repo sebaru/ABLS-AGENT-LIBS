@@ -26,8 +26,37 @@
  */
 
 /**************************************************** Prototypes de fonctions *************************************************/
- #include "abls-agent-libs.h"
+ #define _GNU_SOURCE
+ #include <stdarg.h>
 
+ #include "agent_private.h"
+
+/******************************************************************************************************************************/
+/* Agent_subscribe_local: Souscrit à un topic sur le broker MQTT local                                                        */
+/* Entrée: La structure afférente et le topic (variadique)                                                                    */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_subscribe_local ( struct ABLS_AGENT *agent, gchar *format, ... )
+  { gchar topic[256];
+    va_list ap;
+
+    if (!agent || !agent->mqtt_local || !format) return;
+
+    va_start ( ap, format );
+    g_vsnprintf ( topic, sizeof(topic), format, ap );
+    va_end ( ap );
+
+    Mqtt_subscribe ( agent->mqtt_local, "%s", topic );
+  }
+/******************************************************************************************************************************/
+/* Agent_is_mqtt_local_connected: Indique si le broker MQTT local est joignable                                               */
+/* Entrée: La structure afférente                                                                                             */
+/* Sortie: TRUE si connecté                                                                                                   */
+/******************************************************************************************************************************/
+ gboolean Agent_is_mqtt_local_connected ( struct ABLS_AGENT *agent )
+  { if (!agent || !agent->mqtt_local) return(FALSE);
+    return ( Mqtt_is_connected ( agent->mqtt_local ) );
+  }
 /******************************************************************************************************************************/
 /* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                     */
 /* Entrée: La structure afférente                                                                                             */

@@ -36,7 +36,7 @@
  #include <pwd.h>
 
 /**************************************************** Prototypes de fonctions *************************************************/
- #include "abls-agent-libs.h"
+ #include "agent_private.h"
 
 /******************************************************************************************************************************/
 /* Agent_send_comm_to_master: Envoi le statut de la comm au master                                                            */
@@ -44,7 +44,9 @@
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
  void Agent_send_comm_to_master ( struct ABLS_AGENT *agent, gboolean etat )
-  { if (agent->comm_status != etat || agent->comm_next_update <= time(NULL))
+  { if (!agent) return;
+
+    if (agent->comm_status != etat || agent->comm_next_update <= time(NULL))
      { Mqtt_Send_WATCHDOG ( agent, "IO_COMM", (etat ? 900 : 0) );
        agent->comm_status = etat;
        agent->comm_next_update = time(NULL) + 60;                                                       /* Toutes les minutes */
@@ -143,7 +145,9 @@
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
  void Agent_loop ( struct ABLS_AGENT *agent )
-  { static guint  tps_nbr_tour = 0;
+  { if (!agent) return;
+
+    static guint  tps_nbr_tour = 0;
     static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
     static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
 
@@ -184,7 +188,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Agent_is_ready ( struct ABLS_AGENT *agent )
-  { Mqtt_start ( agent->mqtt_local );
+  { if (!agent) return;
+
+    Mqtt_start ( agent->mqtt_local );
     Mqtt_start ( agent->mqtt_api );
     Agent_status_push ( agent, "Agent is UP" );                          /* Status de base, jamais dépilé : la pile reste pleine */
   }
@@ -207,7 +213,8 @@
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end ( agent );
+       return(NULL);
      }
     agent->argc          = argc;
     agent->argv          = argv;
@@ -424,7 +431,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  static void Agent_stop ( struct ABLS_AGENT *agent )
-  { Agent_disable_signals();
+  { if (!agent) return;
+
+    Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
@@ -441,7 +450,9 @@
 /* Sortie: néant, ne revient pas.                                                                                             */
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
-  { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
+  { if (!agent) return;
+
+    if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
     Agent_status_push ( agent, "Agent is stopped" );
     sleep(1);
@@ -455,7 +466,9 @@
 /* Sortie: néant, ne revient pas                                                                                              */
 /******************************************************************************************************************************/
  void Agent_restart ( struct ABLS_AGENT *agent )
-  { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting." );
+  { if (!agent) return;
+
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting." );
     Agent_status_push ( agent, "Agent is restarting" );
     sleep(1);
     Agent_stop ( agent );
@@ -470,7 +483,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  gchar *Agent_config_get_string ( struct ABLS_AGENT *agent, gchar *name )
-  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_string ( agent->api_config, name ));
+  { if (!agent) return(NULL);
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_string ( agent->api_config, name ));
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_string ( agent->local_config, name ));
     return(NULL);
   }
@@ -480,7 +495,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  gboolean Agent_config_get_bool ( struct ABLS_AGENT *agent, gchar *name )
-  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_bool ( agent->api_config, name ));
+  { if (!agent) return(FALSE);
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_bool ( agent->api_config, name ));
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_bool ( agent->local_config, name ));
     return(FALSE);
   }
@@ -490,7 +507,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  gint Agent_config_get_int ( struct ABLS_AGENT *agent, gchar *name )
-  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_int ( agent->api_config,   name ));
+  { if (!agent) return(0);
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_int ( agent->api_config,   name ));
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_int ( agent->local_config, name ));
     return(0);
   }
@@ -500,8 +519,74 @@
 /* Sortie: le tableau                                                                                                         */
 /******************************************************************************************************************************/
  JsonArray *Agent_config_get_array ( struct ABLS_AGENT *agent, gchar *name )
-  { if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_array ( agent->api_config,   name ));
+  { if (!agent) return(NULL);
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_get_array ( agent->api_config,   name ));
     if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_get_array ( agent->local_config, name ));
     return(NULL);
+  }
+/******************************************************************************************************************************/
+/* Agent_config_get_array_length: nombre d'éléments d'un tableau de configuration                                             */
+/* Entrée: La structure afférente et le nom de la configuration                                                               */
+/* Sortie: le nombre d'éléments                                                                                               */
+/******************************************************************************************************************************/
+ guint Agent_config_get_array_length ( struct ABLS_AGENT *agent, gchar *name )
+  { if (!agent) return(0);
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name )) return(Json_array_get_length ( agent->api_config,   name ));
+    if (agent->local_config && Json_has_member ( agent->local_config, name )) return(Json_array_get_length ( agent->local_config, name ));
+    return(0);
+  }
+/******************************************************************************************************************************/
+/* Agent_config_foreach_array_element: parcourt un tableau de configuration                                                   */
+/* Entrée: La structure afférente, le nom de la configuration, la fonction de callback et sa donnée                           */
+/* Sortie: néant                                                                                                              */
+/******************************************************************************************************************************/
+ void Agent_config_foreach_array_element ( struct ABLS_AGENT *agent, gchar *name, JsonArrayForeach fonction, gpointer data )
+  { if (!agent) return;
+
+    if (agent->api_config   && Json_has_member ( agent->api_config,   name ))
+     { Json_foreach_array_element ( agent->api_config,   name, fonction, data ); return; }
+    if (agent->local_config && Json_has_member ( agent->local_config, name ))
+     { Json_foreach_array_element ( agent->local_config, name, fonction, data ); }
+  }
+/******************************************************************************************************************************/
+/* Agent_get_* / Agent_is_* : accesseurs à la structure opaque ABLS_AGENT                                                     */
+/* Entrée: la structure afférente                                                                                             */
+/* Sortie: le champ demandé, ou une valeur neutre si l'agent est NULL                                                         */
+/******************************************************************************************************************************/
+ gchar *Agent_get_tech_id ( struct ABLS_AGENT *agent )
+  { if (!agent) return(NULL);
+    return(agent->agent_tech_id);
+  }
+
+ gchar *Agent_get_classe ( struct ABLS_AGENT *agent )
+  { if (!agent) return(NULL);
+    return(agent->agent_classe);
+  }
+
+ void *Agent_get_vars ( struct ABLS_AGENT *agent )
+  { if (!agent) return(NULL);
+    return(agent->vars);
+  }
+
+ guint Agent_get_top ( struct ABLS_AGENT *agent )
+  { if (!agent) return(0);
+    return(agent->Top);
+  }
+
+ gboolean Agent_is_running ( struct ABLS_AGENT *agent )
+  { if (!agent) return(FALSE);
+    return(agent->Agent_run == AGENT_IS_RUNNING);
+  }
+
+ gboolean Agent_is_apt ( struct ABLS_AGENT *agent )
+  { if (!agent) return(FALSE);
+    return(agent->is_apt);
+  }
+
+ gboolean Agent_is_dnf ( struct ABLS_AGENT *agent )
+  { if (!agent) return(FALSE);
+    return(agent->is_dnf);
   }
 /*----------------------------------------------------------------------------------------------------------------------------*/
