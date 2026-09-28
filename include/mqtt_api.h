@@ -33,6 +33,7 @@
 
  #include "agent.h"
 
+ extern void      Agent_subscribe_mqtt_api    ( struct ABLS_AGENT *agent, gchar *format, ... );
  extern JsonNode *Agent_get_mqtt_api_message  ( struct ABLS_AGENT *agent );
  extern void      Agent_send_mqtt_api_message ( struct ABLS_AGENT *agent, JsonNode *node, gboolean retain, gchar *topic, ... );
 

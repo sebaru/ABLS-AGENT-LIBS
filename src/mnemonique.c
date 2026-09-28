@@ -26,7 +26,7 @@
  */
 
 /**************************************************** Prototypes de fonctions *************************************************/
- #include "abls-agent-libs.h"
+ #include "agent_private.h"
 
 /******************************************************************************************************************************/
 /* Mnemo_create_AI: Créer un JSON pour une AI                                                                                 */
@@ -34,7 +34,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_AI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "AI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -57,7 +59,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_DI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "DI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -77,7 +81,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_CI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "CI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -98,7 +104,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_DO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gboolean mono )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "DO" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -118,7 +126,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_AO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "AO" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -139,7 +149,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_HORLOGE ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "HORLOGE" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
@@ -158,7 +170,9 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Mnemo_create_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit, gint heure, gint minute )
-  { JsonNode *node = Json_create();
+  { if (!agent) return;
+
+    JsonNode *node = Json_create();
     if (!node) return;
     Json_add_string ( node, "classe", "HORLOGE" );
     Json_add_string ( node, "tech_id", Json_get_string ( bit, "tech_id" ) );
@@ -180,7 +194,7 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Mnemo_delete_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit )
-  { if (!bit) return;
+  { if (!agent || !bit) return;
     Json_add_string ( bit, "classe", "HORLOGE" );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/del/tick", bit );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
@@ -195,7 +209,9 @@
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
  JsonNode *Mnemo_create_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
-  { JsonNode *node = Json_create();
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
     if (!node) return(NULL);
     Json_add_string ( node, "classe", "WATCHDOG" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
