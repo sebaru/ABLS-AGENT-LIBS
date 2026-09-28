@@ -80,6 +80,9 @@
     JsonNode *ai_virt_mem;                                                                                    /* Mémoire virtuelle */
     JsonNode *ai_log_par_min;                                                                              /* Logs par minute */
 
+    GSList  *status_stack;                                   /* Pile LIFO des status de l'agent. La tete est le status publié */
+    GRWLock  status_stack_lock;
+
     struct itimerval timer;
     guint Top;                                                                                          /* dixième de seconde */
     void *vars;                                                               /* Pointeur vers les variables de run du module */
@@ -91,7 +94,8 @@
  extern void               Agent_enable_signals       ( struct ABLS_AGENT *agent );
  extern void               Agent_disable_signals      ( void );
  extern void               Agent_send_comm_to_master  ( struct ABLS_AGENT *agent, gboolean etat );
- extern void               Agent_set_status           ( struct ABLS_AGENT *agent, gchar *format, ... );
+ extern gpointer           Agent_status_push          ( struct ABLS_AGENT *agent, gchar *format, ... );
+ extern void               Agent_status_pop           ( struct ABLS_AGENT *agent, gpointer handle );
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
  extern void               Agent_restart              ( struct ABLS_AGENT *agent );
