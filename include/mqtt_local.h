@@ -33,14 +33,13 @@
 
  #include "agent.h"
 
- extern void Agent_subscribe_mqtt_local ( struct ABLS_AGENT *agent, gchar *format, ... );
+ extern void     Agent_subscribe_mqtt_local    ( struct ABLS_AGENT *agent, gchar *format, ... );
  extern gboolean Agent_is_mqtt_local_connected ( struct ABLS_AGENT *agent );
-
- extern void Mqtt_Send_AI       ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range );
- extern void Mqtt_Send_DI       ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat );
- extern void Mqtt_Send_DI_pulse ( struct ABLS_AGENT *agent, gchar *tech_id, gchar *acronyme );
- extern void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *thread_ci );
- extern void Mqtt_Send_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gint consigne );
+ extern void     Mqtt_Send_AI                  ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range );
+ extern void     Mqtt_Send_DI                  ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat );
+ extern void     Mqtt_Send_DI_pulse            ( struct ABLS_AGENT *agent, gchar *tech_id, gchar *acronyme );
+ extern void     Mqtt_Send_CI_pulse            ( struct ABLS_AGENT *agent, JsonNode *thread_ci );
+ extern void     Mqtt_Send_WATCHDOG            ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gint consigne );
 
 #endif /* _ABLS_AGENT_LIBS_MQTT_LOCAL_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/
