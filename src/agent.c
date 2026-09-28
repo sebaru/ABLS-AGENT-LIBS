@@ -51,26 +51,69 @@
      }
   }
 /******************************************************************************************************************************/
-/* Agent_set_status: Publie un status texte de l'agent vers l'API via MQTT                                                    */
-/* Entrée: La structure afférente et une chaine formatée variadique                                                           */
+/* Agent_status_publish_top: Publie vers l'API le status en haut de la pile                                                   */
+/* Entrée: La structure afférente                                                                                             */
 /* Sortie: aucune                                                                                                             */
 /******************************************************************************************************************************/
- void Agent_set_status ( struct ABLS_AGENT *agent, gchar *format, ... )
-  { gchar status[256];
-    va_list ap;
+ static void Agent_status_publish_top ( struct ABLS_AGENT *agent )
+  { if (!agent || !agent->mqtt_api) return;
 
-    if (!agent || !agent->mqtt_api || !format) return;
-
-    va_start ( ap, format );
-    g_vsnprintf ( status, sizeof(status), format, ap );
-    va_end ( ap );
+    g_rw_lock_reader_lock ( &agent->status_stack_lock );
+    gchar *status = g_strdup ( agent->status_stack ? agent->status_stack->data : "" );
+    g_rw_lock_reader_unlock ( &agent->status_stack_lock );                         /* Jamais d'envoi MQTT en tenant le verrou */
+    if (!status) return;
 
     JsonNode *RootNode = Json_create();
-    if (!RootNode) return;
-    Json_add_string ( RootNode, "status", status );
-    Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/STATUS", agent->agent_tech_id );
-    Json_unref ( RootNode );
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "%s", status );
+    if (RootNode)
+     { Json_add_string ( RootNode, "status", status );
+       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/STATUS", agent->agent_tech_id );
+       Json_unref ( RootNode );
+       Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "%s", status );
+     }
+    g_free ( status );
+  }
+/******************************************************************************************************************************/
+/* Agent_status_push: Empile un status texte de l'agent et le publie vers l'API                                               */
+/* Entrée: La structure afférente et une chaine formatée variadique                                                           */
+/* Sortie: un identifiant de push, à fournir à Agent_status_pop                                                               */
+/******************************************************************************************************************************/
+ gpointer Agent_status_push ( struct ABLS_AGENT *agent, gchar *format, ... )
+  { va_list ap;
+
+    if (!agent || !format) return(NULL);
+
+    va_start ( ap, format );
+    gchar *status = g_strdup_vprintf ( format, ap );
+    va_end ( ap );
+    if (!status) return(NULL);
+
+    g_rw_lock_writer_lock ( &agent->status_stack_lock );
+    agent->status_stack = g_slist_prepend ( agent->status_stack, status );
+    g_rw_lock_writer_unlock ( &agent->status_stack_lock );
+
+    Agent_status_publish_top ( agent );
+    return(status);
+  }
+/******************************************************************************************************************************/
+/* Agent_status_pop: Dépile le status identifié par handle                                                                    */
+/* Entrée: La structure afférente et l'identifiant renvoyé par Agent_status_push                                              */
+/* Sortie: aucune. Le status suivant n'est republié que si le handle était en haut de la pile                                 */
+/******************************************************************************************************************************/
+ void Agent_status_pop ( struct ABLS_AGENT *agent, gpointer handle )
+  { if (!agent || !handle) return;
+
+    g_rw_lock_writer_lock ( &agent->status_stack_lock );
+    if (!g_slist_find ( agent->status_stack, handle ))
+     { g_rw_lock_writer_unlock ( &agent->status_stack_lock );
+       Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_WARNING, "Unknown status handle, dropping" );
+       return;
+     }
+    gboolean was_top = (agent->status_stack->data == handle);
+    agent->status_stack = g_slist_remove ( agent->status_stack, handle );
+    g_rw_lock_writer_unlock ( &agent->status_stack_lock );
+
+    g_free ( handle );
+    if (was_top) Agent_status_publish_top ( agent );
   }
 /******************************************************************************************************************************/
 /* Agent_get_memory_usage: Lit l'usage mémoire du processus dans procfs                                                       */
@@ -143,7 +186,7 @@
  void Agent_is_ready ( struct ABLS_AGENT *agent )
   { Mqtt_start ( agent->mqtt_local );
     Mqtt_start ( agent->mqtt_api );
-    Agent_set_status ( agent, "Agent is UP" );
+    Agent_status_push ( agent, "Agent is UP" );                          /* Status de base, jamais dépilé : la pile reste pleine */
   }
 /******************************************************************************************************************************/
 /* Agent_init: appelé par chaque agent, lors de son démarrage                                                                 */
@@ -164,11 +207,12 @@
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
-       Agent_end ( agent );                                      /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
      }
     agent->argc          = argc;
     agent->argv          = argv;
     agent->agent_classe  = agent_classe;
+    g_rw_lock_init ( &agent->status_stack_lock );
 
     Agent_enable_signals ( agent );
     Http_Init ( agent );
@@ -387,6 +431,9 @@
     if (agent->vars) { g_free(agent->vars); }
     Http_End ( agent );
     Json_unref ( agent->IOs );
+    g_slist_free_full ( agent->status_stack, g_free );
+    agent->status_stack = NULL;
+    g_rw_lock_clear ( &agent->status_stack_lock );
   }
 /******************************************************************************************************************************/
 /* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
@@ -396,7 +443,7 @@
  void Agent_end ( struct ABLS_AGENT *agent )
   { if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
-    Agent_set_status ( agent, "Agent is stopped" );
+    Agent_status_push ( agent, "Agent is stopped" );
     sleep(1);
     Agent_stop ( agent );
     g_free(agent);
@@ -409,7 +456,7 @@
 /******************************************************************************************************************************/
  void Agent_restart ( struct ABLS_AGENT *agent )
   { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is restarting." );
-    Agent_set_status ( agent, "Agent is restarting" );
+    Agent_status_push ( agent, "Agent is restarting" );
     sleep(1);
     Agent_stop ( agent );
     gchar **argv = agent->argv;
