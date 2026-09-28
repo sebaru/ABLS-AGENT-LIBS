@@ -33,7 +33,7 @@
 /* Entrée: la structure ABLS_AGENT, les parametres de l'AI                                                                    */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_AI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
+ JsonNode *Mnemo_create_AI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -41,7 +41,7 @@
     Json_add_string ( node, "classe", "AI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     Json_add_string ( node, "unite", unite );
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ai", node );
@@ -58,7 +58,7 @@
 /* Entrée: la structure AGENT, les parametres de la DI                                                                        */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_DI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
+ JsonNode *Mnemo_create_DI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -66,7 +66,7 @@
     Json_add_string ( node, "classe", "DI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/di", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add DI %s to API", agent_acronyme ); }
@@ -80,7 +80,7 @@
 /* Entrée: la structure ABLS_AGENT, les parametres de la CI                                                                   */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_CI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
+ JsonNode *Mnemo_create_CI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -88,7 +88,7 @@
     Json_add_string ( node, "classe", "CI" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     Json_add_string ( node, "unite", unite );
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ci", node );
@@ -103,7 +103,7 @@
 /* Entrée: la structure ABLS_AGENT, les parametres de la DI                                                                   */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_DO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gboolean mono )
+ JsonNode *Mnemo_create_DO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gboolean mono )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -111,7 +111,7 @@
     Json_add_string ( node, "classe", "DO" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     Json_add_bool   ( node, "mono", mono );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/do", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
@@ -125,7 +125,7 @@
 /* Entrée: la structure AGENT, les parametres de l'AO                                                                         */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_AO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle, gchar *unite, gint archivage )
+ JsonNode *Mnemo_create_AO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -133,7 +133,7 @@
     Json_add_string ( node, "classe", "AO" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     Json_add_string ( node, "unite", unite );
     Json_add_int    ( node, "archivage", archivage );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/ao", node );
@@ -148,7 +148,7 @@
 /* Entrée: la structure ABLS_AGENT, les parametres de l'HORLOGE                                                               */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_HORLOGE ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
+ JsonNode *Mnemo_create_HORLOGE ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -156,7 +156,7 @@
     Json_add_string ( node, "classe", "HORLOGE" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/horloge", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add HORLOGE %s to API", agent_acronyme ); }
@@ -208,7 +208,7 @@
 /* Entrée: la structure ABLS_AGENT, les parametres du WATCHDOG                                                                */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */
 /******************************************************************************************************************************/
- JsonNode *Mnemo_create_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *libelle )
+ JsonNode *Mnemo_create_WATCHDOG ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description )
   { if (!agent) return(NULL);
 
     JsonNode *node = Json_create();
@@ -216,7 +216,7 @@
     Json_add_string ( node, "classe", "WATCHDOG" );
     Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
     Json_add_string ( node, "agent_acronyme", agent_acronyme );
-    Json_add_string ( node, "libelle", libelle );
+    Json_add_string ( node, "description", description );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/watchdog", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add WATCHDOG %s to API", agent_acronyme ); }
