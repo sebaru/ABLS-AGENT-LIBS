@@ -32,11 +32,11 @@
  #include "agent_private.h"
 
 /******************************************************************************************************************************/
-/* Agent_subscribe_local: Souscrit à un topic sur le broker MQTT local                                                        */
+/* Agent_subscribe_mqtt_local: Souscrit à un topic sur le broker MQTT local                                                   */
 /* Entrée: La structure afférente et le topic (variadique)                                                                    */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Agent_subscribe_local ( struct ABLS_AGENT *agent, gchar *format, ... )
+ void Agent_subscribe_mqtt_local ( struct ABLS_AGENT *agent, gchar *format, ... )
   { gchar topic[256];
     va_list ap;
 
