@@ -242,10 +242,11 @@
     Json_add_int  ( agent->local_config, "log_level", LOG_INFO );                     /* Mise en place des valeurs par défaut */
     Json_add_bool ( agent->local_config, "dry_run", FALSE );
     Json_add_int  ( agent->local_config, "tps", 50 );                                       /* 50 tour par seconde par défaut */
+    Json_add_string ( agent->local_config, "config_file", "/etc/abls/abls-agent.conf" );
 
 /*---------------------------------------- apply ENV, FILE and CLI parameters ------------------------------------------------*/
     Config_apply_ENV  ( agent->local_config );                                                        /* Apply ENV parameters */
-    Config_apply_FILE ( agent->local_config, "/etc/abls/abls-agent.conf" );                          /* Apply file parameters */
+    Config_apply_FILE ( agent->local_config, Json_get_string ( agent->local_config, "config_file" ) );/* Apply file parameter */
     Config_add_parameter ( "domain-uuid",   "UUID",    "UUID du domaine",   CONFIG_STRING );
     Config_add_parameter ( "domain-secret", "SECRET",  "Secret du domaine", CONFIG_STRING );
     Config_add_parameter ( "server-uuid",   "UUID",    "UUID du serveur",   CONFIG_STRING );
