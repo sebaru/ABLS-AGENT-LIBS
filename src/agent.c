@@ -208,7 +208,9 @@
           agent_classe, agent_version, ABLS_AGENT_LIBS_VERSION );
     Info( __func__, agent_classe, NULL, LOG_INFO, "User='%s', Group='%s'",
           getpwuid(getuid())->pw_name, getgrgid(getgid())->gr_name );
-    Info( __func__, agent_classe, NULL, LOG_INFO, "Using directory '%s'", g_get_current_dir() );
+    gchar *current_dir = g_get_current_dir();
+    Info( __func__, agent_classe, NULL, LOG_INFO, "Using directory '%s'", current_dir ? current_dir : "unknown" );
+    g_free ( current_dir );
 
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
@@ -412,10 +414,7 @@
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
     agent->IOs = Json_create();
-    Json_add_array ( agent->IOs, "IOs" );
-
-/* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
-    agent->IOs = Json_create();
+    if (!agent->IOs) { Agent_end ( agent ); }
     Json_add_array ( agent->IOs, "IOs" );
 
     agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
@@ -441,6 +440,8 @@
     if (agent->vars) { g_free(agent->vars); }
     Http_End ( agent );
     Json_unref ( agent->IOs );
+    Json_unref ( agent->local_config );
+    Json_unref ( agent->api_config );
     g_slist_free_full ( agent->status_stack, g_free );
     agent->status_stack = NULL;
     g_rw_lock_clear ( &agent->status_stack_lock );
