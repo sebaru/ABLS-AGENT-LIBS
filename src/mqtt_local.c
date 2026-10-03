@@ -130,6 +130,40 @@
     Json_unref( thread_di );
   }
 /******************************************************************************************************************************/
+/* Mqtt_Send_DO: Envoie l'etat d'une sortie DO sur le broker MQTT local                                                         */
+/* Entree: la structure ABLS_AGENT, agent_tech_id, agent_acronyme et l'etat booleen                                               */
+/* Sortie: neant                                                                                                               */
+/******************************************************************************************************************************/
+ void Mqtt_Send_DO ( struct ABLS_AGENT *agent, gchar *agent_tech_id, gchar *agent_acronyme, gboolean etat )
+  { if (! (agent && agent_tech_id && agent_acronyme)) return;
+    JsonNode *RootNode = Json_create();
+    if (!RootNode)
+     { Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_ERR, "'%s:%s': Json node create error", agent_tech_id, agent_acronyme );
+       return;
+     }
+    Json_add_bool( RootNode, "etat", etat );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %d", agent_tech_id, agent_acronyme, etat );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_DO/%s/%s", agent_tech_id, agent_acronyme );
+    Json_unref( RootNode );
+  }
+/******************************************************************************************************************************/
+/* Mqtt_Send_AO: Envoie la valeur d'une sortie AO sur le broker MQTT local                                                       */
+/* Entree: la structure ABLS_AGENT, agent_tech_id, agent_acronyme et la valeur gdouble                                             */
+/* Sortie: neant                                                                                                               */
+/******************************************************************************************************************************/
+ void Mqtt_Send_AO ( struct ABLS_AGENT *agent, gchar *agent_tech_id, gchar *agent_acronyme, gdouble valeur )
+  { if (! (agent && agent_tech_id && agent_acronyme)) return;
+    JsonNode *RootNode = Json_create();
+    if (!RootNode)
+     { Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_ERR, "'%s:%s': Json node create error", agent_tech_id, agent_acronyme );
+       return;
+     }
+    Json_add_double( RootNode, "valeur", valeur );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = %f", agent_tech_id, agent_acronyme, valeur );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, TRUE, "SET_AO/%s/%s", agent_tech_id, agent_acronyme );
+    Json_unref( RootNode );
+  }
+/******************************************************************************************************************************/
 /* Mqtt_Send_CI_pulse: Envoie une impulsion CI au master                                                                      */
 /* Entrée: la structure ABLS_AGENT, le noeud CI                                                                               */
 /* Sortie: néant                                                                                                              */
