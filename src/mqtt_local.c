@@ -124,25 +124,21 @@
   { if (! (agent && tech_id && acronyme)) return;
     JsonNode *thread_di = Json_create();
     if (!thread_di) return;
-    Json_add_string( thread_di, "from_thread_tech_id", agent->agent_tech_id );
+    Json_add_string( thread_di, "from_agent_tech_id", agent->agent_tech_id );
     Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", tech_id, acronyme );
     if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, thread_di, FALSE, "SET_DI_PULSE/%s/%s", tech_id, acronyme );
     Json_unref( thread_di );
   }
 /******************************************************************************************************************************/
 /* Mqtt_Send_CI_pulse: Envoie une impulsion CI au master                                                                      */
-/* Entrée: la structure ABLS_AGENT, le noeud CI                                                                                   */
+/* Entrée: la structure ABLS_AGENT, le noeud CI                                                                               */
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
- void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *thread_ci )
-  { if (! (agent && thread_ci)) return;
-    gchar *thread_acronyme = Json_get_string ( thread_ci, "thread_acronyme" );
-    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", agent->agent_tech_id, thread_acronyme );
-    JsonNode *RootNode = Json_create();
-    if (!RootNode) return;
-    Json_add_string( RootNode, "from_thread_tech_id", agent->agent_tech_id );
-    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, RootNode, FALSE, "SET_CI_PULSE/%s/%s", agent->agent_tech_id, thread_acronyme );
-    Json_unref( RootNode );
+ void Mqtt_Send_CI_pulse ( struct ABLS_AGENT *agent, JsonNode *agent_ci )
+  { if (! (agent && agent_ci)) return;
+    gchar *agent_acronyme = Json_get_string ( agent_ci, "agent_acronyme" );
+    Info( __func__, "mqtt_local", agent->agent_tech_id, LOG_DEBUG, "'%s:%s' = PULSE", agent->agent_tech_id, agent_acronyme );
+    if (agent->dry_run == FALSE) Mqtt_send_message ( agent->mqtt_local, NULL, FALSE, "SET_CI_PULSE/%s/%s", agent->agent_tech_id, agent_acronyme );
   }
 /******************************************************************************************************************************/
 /* Mqtt_Send_WATCHDOG: Envoie le WATCHDOG au master                                                                           */

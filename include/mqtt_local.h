@@ -38,7 +38,7 @@
  extern void     Mqtt_Send_AI                  ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range );
  extern void     Mqtt_Send_DI                  ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat );
  extern void     Mqtt_Send_DI_pulse            ( struct ABLS_AGENT *agent, gchar *tech_id, gchar *acronyme );
- extern void     Mqtt_Send_CI_pulse            ( struct ABLS_AGENT *agent, JsonNode *thread_ci );
+ extern void     Mqtt_Send_CI_pulse            ( struct ABLS_AGENT *agent, JsonNode *agent_ci );
  extern void     Mqtt_Send_WATCHDOG            ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gint consigne );
 
 #endif /* _ABLS_AGENT_LIBS_MQTT_LOCAL_H_ */
