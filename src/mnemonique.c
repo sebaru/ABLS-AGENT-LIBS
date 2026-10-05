@@ -29,6 +29,49 @@
  #include "agent_private.h"
 
 /******************************************************************************************************************************/
+/* Mnemo_create_MONO: Crée un JSON et déclare un monostable interne auprès de l'API                                           */
+/* Entrée: la structure ABLS_AGENT, l'acronyme et la description du monostable                                                 */
+/* Sortie: le JsonNode représentant le bit interne, ou NULL si l'agent est absent ou la création JSON échoue                  */
+/******************************************************************************************************************************/
+ JsonNode *Mnemo_create_MONO ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description )
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
+    if (!node) return(NULL);
+    Json_add_string ( node, "classe", "MONO" );
+    Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
+    Json_add_string ( node, "agent_acronyme", agent_acronyme );
+    Json_add_string ( node, "description", description );
+    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/mono", node );
+    if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add MONO %s to API", agent_acronyme ); }
+    Json_unref ( api_result );
+    Json_array_add_one_element ( agent->IOs, "IOs", node );
+    return(node);
+  }
+/******************************************************************************************************************************/
+/* Mnemo_create_BI: Crée un JSON et déclare un bistable interne auprès de l'API, avec groupe fixé à 0                           */
+/* Entrée: la structure ABLS_AGENT, l'acronyme et la description du bistable                                                   */
+/* Sortie: le JsonNode représentant le bit interne, ou NULL si l'agent est absent ou la création JSON échoue                  */
+/******************************************************************************************************************************/
+ JsonNode *Mnemo_create_BI ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description )
+  { if (!agent) return(NULL);
+
+    JsonNode *node = Json_create();
+    if (!node) return(NULL);
+    Json_add_string ( node, "classe", "BI" );
+    Json_add_string ( node, "agent_tech_id", agent->agent_tech_id );
+    Json_add_string ( node, "agent_acronyme", agent_acronyme );
+    Json_add_string ( node, "description", description );
+    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/agent/add/bi", node );
+    if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
+     { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR, "Could not add BI %s to API", agent_acronyme ); }
+    Json_unref ( api_result );
+    Json_array_add_one_element ( agent->IOs, "IOs", node );
+    return(node);
+  }
+
+/******************************************************************************************************************************/
 /* Mnemo_create_AI: Créer un JSON pour une AI                                                                                 */
 /* Entrée: la structure ABLS_AGENT, les parametres de l'AI                                                                    */
 /* Sortie: le JsonNode représentant le bit interne                                                                            */

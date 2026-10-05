@@ -58,6 +58,23 @@
     return ( Mqtt_is_connected ( agent->mqtt_local ) );
   }
 /******************************************************************************************************************************/
+/* Agent_send_mqtt_local_message: Envoi d'un message MQTT local sur un topic formate                                          */
+/* Entrée: Agent, JsonNode, flag retain et topic (variadique)                                                                 */
+/* Sortie: aucune                                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_send_mqtt_local_message ( struct ABLS_AGENT *agent, JsonNode *node, gboolean retain, gchar *topic, ... )
+  { gchar topic_formate[256];
+    va_list ap;
+
+    if (!agent || !agent->mqtt_local || !topic || agent->dry_run) return;
+
+    va_start ( ap, topic );
+    g_vsnprintf ( topic_formate, sizeof(topic_formate), topic, ap );
+    va_end ( ap );
+
+    Mqtt_send_message ( agent->mqtt_local, node, retain, "%s", topic_formate );
+  }
+/******************************************************************************************************************************/
 /* Agent_get_mqtt_local_message: Dépile un message de la queue MQTT locale (non-bloquant)                                     */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: pointeur vers le JsonNode du message, ou NULL si aucun message disponible                                          */

@@ -29,8 +29,6 @@
 
  #include <string.h>
  #include <signal.h>
- #include <sys/prctl.h>
-
  #include "agent_private.h"
 
  static struct ABLS_AGENT *local_agent = NULL;
