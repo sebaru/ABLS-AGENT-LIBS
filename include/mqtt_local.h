@@ -35,6 +35,7 @@
 
  extern void     Agent_subscribe_mqtt_local    ( struct ABLS_AGENT *agent, gchar *format, ... );
  extern gboolean Agent_is_mqtt_local_connected ( struct ABLS_AGENT *agent );
+ extern void     Agent_send_mqtt_local_message ( struct ABLS_AGENT *agent, JsonNode *node, gboolean retain, gchar *topic, ... );
  extern void     Mqtt_Send_AI                  ( struct ABLS_AGENT *agent, JsonNode *agent_ai, gdouble valeur, gboolean in_range );
  extern void     Mqtt_Send_DI                  ( struct ABLS_AGENT *agent, JsonNode *agent_di, gboolean etat );
  extern void     Mqtt_Send_DO                  ( struct ABLS_AGENT *agent, gchar *agent_tech_id, gchar *agent_acronyme, gboolean etat );

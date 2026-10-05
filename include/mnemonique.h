@@ -30,6 +30,8 @@
 
  extern JsonNode *Mnemo_create_AI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage );
  extern JsonNode *Mnemo_create_DI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description );
+ extern JsonNode *Mnemo_create_MONO         ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description );
+ extern JsonNode *Mnemo_create_BI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description );
  extern JsonNode *Mnemo_create_CI           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage );
  extern JsonNode *Mnemo_create_DO           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gboolean mono );
  extern JsonNode *Mnemo_create_AO           ( struct ABLS_AGENT *agent, gchar *agent_acronyme, gchar *description, gchar *unite, gint archivage );
