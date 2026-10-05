@@ -418,8 +418,8 @@
     Json_add_array ( agent->IOs, "IOs" );
 
     agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
-    agent->ai_rss_mem          = Mnemo_create_AI ( agent, "RSS_MEM", "RSS", "kB", AGENT_ARCHIVE_5_MIN );
-    agent->ai_virt_mem         = Mnemo_create_AI ( agent, "VIRT_MEM", "Mémoire virtuelle", "kB", AGENT_ARCHIVE_5_MIN );
+    agent->ai_rss_mem          = Mnemo_create_AI ( agent, "MEMORY_RSS", "Mémoire RSS", "kB", AGENT_ARCHIVE_5_MIN );
+    agent->ai_virt_mem         = Mnemo_create_AI ( agent, "MEMORY_VIRTUAL", "Mémoire virtuelle", "kB", AGENT_ARCHIVE_5_MIN );
     agent->ai_log_par_min      = Mnemo_create_AI ( agent, "LOG_PAR_MIN", "Logs par minute", "logs/min", AGENT_ARCHIVE_1_MIN );
 
     Mnemo_create_WATCHDOG ( agent, "IO_COMM", "Statut de la communication" );
