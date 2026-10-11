@@ -88,7 +88,7 @@
     agent->timer.it_value.tv_usec = agent->timer.it_interval.tv_usec = 100000;                      /* = 10 fois par secondes */
     setitimer( ITIMER_REAL, &agent->timer, NULL );                                                         /* Active le timer */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_INFO,
-          "Timer with interval %dms started", agent->timer.it_value.tv_usec/1000 );
+          "Timer with interval %dms started", (gint)agent->timer.it_value.tv_usec/1000 );
   }
 /******************************************************************************************************************************/
 /* Agent_disable_signals: Desactive la gestion des signaux pour l'agent courant                                               */
