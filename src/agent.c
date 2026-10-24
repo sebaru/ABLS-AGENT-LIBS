@@ -176,7 +176,6 @@
        Mqtt_Send_AI ( agent, agent->ai_nbr_tour_par_sec, 1.0*agent->tps_value, TRUE );
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
-       Json_add_bool ( RootNode, "io_comm", agent->comm_status );
        Json_add_bool ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
        Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/HEARTBEAT", agent->agent_tech_id );
        Json_unref ( RootNode );
