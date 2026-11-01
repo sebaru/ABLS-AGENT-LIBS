@@ -151,6 +151,11 @@
     static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
     static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
 
+    gboolean mqtt_api_connected = Mqtt_is_connected ( agent->mqtt_api );
+    if (mqtt_api_connected && !agent->mqtt_api_was_connected)
+     { Agent_status_publish_top ( agent ); }
+    agent->mqtt_api_was_connected = mqtt_api_connected;
+
     Agent_send_comm_to_master ( agent, agent->comm_status );
 
     guint now = agent->Top;
@@ -177,7 +182,7 @@
        Mqtt_Send_AI ( agent, agent->ai_log_par_min, 1.0*Info_reset_nbr_log(), TRUE );
        JsonNode *RootNode = Json_create();
        Json_add_bool ( RootNode, "mqtt_local_connected", Mqtt_is_connected ( agent->mqtt_local ) );
-       Agent_send_mqtt_api_message ( agent, RootNode, TRUE, "AGENT/%s/HEARTBEAT", agent->agent_tech_id );
+       Agent_send_mqtt_api_message ( agent, RootNode, FALSE, "AGENT/%s/HEARTBEAT", agent->agent_tech_id );
        Json_unref ( RootNode );
      }
   }
