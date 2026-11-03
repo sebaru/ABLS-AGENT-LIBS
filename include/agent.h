@@ -63,6 +63,7 @@
  extern void               Agent_status_pop           ( struct ABLS_AGENT *agent, gpointer handle );
  extern void               Agent_loop                 ( struct ABLS_AGENT *agent );
  extern void               Agent_end                  ( struct ABLS_AGENT *agent );
+ extern void               Agent_end_with_code        ( struct ABLS_AGENT *agent, gint code );
  extern void               Agent_restart              ( struct ABLS_AGENT *agent );
  extern gchar             *Agent_config_get_string    ( struct ABLS_AGENT *agent, gchar *name );
  extern gboolean           Agent_config_get_bool      ( struct ABLS_AGENT *agent, gchar *name );
