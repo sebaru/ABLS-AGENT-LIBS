@@ -219,7 +219,7 @@
     struct ABLS_AGENT *agent = g_try_malloc0 ( sizeof(struct ABLS_AGENT) );
     if (!agent)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc struct ABLS_AGENT" );
-       Agent_end ( agent );
+       Agent_end_with_code ( agent, EXIT_FAILURE );
        return(NULL);
      }
     agent->argc          = argc;
@@ -243,7 +243,7 @@
     agent->local_config = Json_create();
     if (!agent->local_config)
      { Info( __func__, agent_classe, NULL, LOG_ALERT, "Memory error trying to malloc local config, exiting." );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end_with_code ( agent, EXIT_FAILURE );                          /* Pas besoin de return : Agent_end fait un exit */
      }
     Json_add_int  ( agent->local_config, "log_level", LOG_INFO );                     /* Mise en place des valeurs par défaut */
     Json_add_bool ( agent->local_config, "dry_run", FALSE );
@@ -269,7 +269,7 @@
     if (!Json_has_member( agent->local_config, "agent_tech_id" ))
      { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'agent_tech_id', in config, exiting." );
        printf ( "There is no 'agent_tech_id', in config, exiting.\n" );
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end_with_code ( agent, EXIT_FAILURE );                          /* Pas besoin de return : Agent_end fait un exit */
      }
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
     gchar config_file_with_tech_id[64];
@@ -282,7 +282,7 @@
     if ( agent->standalone == FALSE )
      { if (!Json_has_member( agent->local_config, "api_url" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'api_url', in config, exiting." );
-          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );                       /* Pas besoin de return : Agent_end fait un exit */
         }
 
        if (!Json_has_member( agent->local_config, "server_uuid" ))
@@ -294,26 +294,26 @@
 
        if (!Json_has_member( agent->local_config, "domain_uuid" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
-          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );                       /* Pas besoin de return : Agent_end fait un exit */
         }
 
        if (!Json_has_member( agent->local_config, "domain_secret" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
-          Agent_end ( agent );                                               /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );                       /* Pas besoin de return : Agent_end fait un exit */
         }
       }
 
     if ( agent->standalone == TRUE )
      { if (!Json_has_member( agent->local_config, "master_hostname" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'master_hostname', in config, exiting." );
-          Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );                          /* Pas besoin de return : Agent_end fait un exit */
         }
      }
 /*--------------------------------------------------- Sauvegarde de la conf --------------------------------------------------*/
     if (Json_get_bool ( agent->local_config, "save" ))
      { if (getuid() != 0)                                                                      /* Must be root to save config */
         { printf ( "Must be root to save config to %s.\n", config_file_with_tech_id );
-          Agent_end ( agent );
+          Agent_end_with_code ( agent, EXIT_FAILURE );
         }
        Json_remove ( agent->local_config, "save" );
        if (!Json_write_to_file ( config_file_with_tech_id, agent->local_config ))
@@ -326,7 +326,7 @@
           Run_shell ( "chmod 0640 %s", config_file_with_tech_id );
           printf ( "Local config saved to '%s'\n", config_file_with_tech_id );
         }
-       Agent_end ( agent );                                                  /* Pas besoin de return : Agent_end fait un exit */
+       Agent_end_with_code ( agent, EXIT_SUCCESS );                          /* Pas besoin de return : Agent_end fait un exit */
      }
 
     agent->api_url       = Json_get_string ( agent->local_config, "api_url" );
@@ -351,7 +351,7 @@
      { agent->vars = g_try_malloc0 ( sizeof_vars );
        if (!agent->vars)
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for vars, exiting." );
-          Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );          /* Pas besoin de return : Agent_end fait un exit */
         }
      }
 /*----------------------------------------- Connexion API pour récupérer la config distante ----------------------------------*/
@@ -359,7 +359,7 @@
      { JsonNode *RootNode = Json_create();
        if (!RootNode)
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_ALERT, "Memory error for POST_CONFIG, exiting." );
-          Agent_end ( agent );                                   /* Pas besoin de return : Agent_end fait un exit */
+          Agent_end_with_code ( agent, EXIT_FAILURE );          /* Pas besoin de return : Agent_end fait un exit */
         }
        Json_add_string ( RootNode, "agent_classe",   agent->agent_classe );
        Json_add_string ( RootNode, "agent_tech_id",  agent->agent_tech_id );
@@ -372,12 +372,12 @@
         { Info_change_log_level ( Json_get_int ( agent->api_config, "log_level" ) ); }
        else
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "POST_CONFIG from API Failed. Unloading." );
-          Agent_end ( agent );
+          Agent_end_with_code ( agent, EXIT_FAILURE );
         }
 
        if (Json_has_member ( agent->api_config, "enable" ) && Json_get_bool ( agent->api_config, "enable" ) == FALSE)
         { Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_CRIT, "Agent disabled in API config. Unloading." );
-          Agent_end ( agent );
+          Agent_end_with_code ( agent, EXIT_SUCCESS );
         }
 
        if (Json_has_member ( agent->api_config, "log_facilities" ))
@@ -418,7 +418,7 @@
 
 /* ------------------------------------------------ Création des IOs -------------------------------------------------------- */
     agent->IOs = Json_create();
-    if (!agent->IOs) { Agent_end ( agent ); }
+    if (!agent->IOs) { Agent_end_with_code ( agent, EXIT_FAILURE ); }
     Json_add_array ( agent->IOs, "IOs" );
 
     agent->ai_nbr_tour_par_sec = Mnemo_create_AI ( agent, "TOUR_PAR_SEC", "Nombre de tour par seconde", "t/s", AGENT_ARCHIVE_5_MIN );
@@ -451,21 +451,28 @@
     g_rw_lock_clear ( &agent->status_stack_lock );
   }
 /******************************************************************************************************************************/
+/* Agent_end_with_code: appelé par chaque agent, lors de son arret (public)                                                   */
+/* Entrée: La structure afférente, le code retour                                                                             */
+/* Sortie: néant, ne revient pas.                                                                                             */
+/******************************************************************************************************************************/
+ void Agent_end_with_code ( struct ABLS_AGENT *agent, gint code )
+  { if (!agent) return;
+
+    if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
+    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
+    Agent_status_push ( agent, "Agent is stopped (%d)", code );
+    sleep(1);
+    Agent_stop ( agent );
+    g_free(agent);
+    exit(code);
+  }
+/******************************************************************************************************************************/
 /* Agent_end: appelé par chaque agent, lors de son arret (public)                                                             */
 /* Entrée: La structure afférente                                                                                             */
 /* Sortie: néant, ne revient pas.                                                                                             */
 /******************************************************************************************************************************/
  void Agent_end ( struct ABLS_AGENT *agent )
-  { if (!agent) return;
-
-    if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
-    Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
-    Agent_status_push ( agent, "Agent is stopped" );
-    sleep(1);
-    Agent_stop ( agent );
-    g_free(agent);
-    exit(0);
-  }
+  { Agent_end_with_code ( agent, EXIT_SUCCESS ); }
 /******************************************************************************************************************************/
 /* Agent_restart: appelé pour restarter le meme agent                                                                         */
 /* Entrée: La structure afférente                                                                                             */
