@@ -45,6 +45,7 @@
     gchar **argv;
     struct ABLS_MQTT *mqtt_local;
     struct ABLS_MQTT *mqtt_api;
+    gboolean mqtt_api_was_connected;
     JsonNode *local_config;                                                      /* Pointeur vers la config locale de l'agent */
     JsonNode *api_config;                                                           /* Pointeur vers la config API de l'agent */
     gchar *agent_tech_id;                                                                 /* Identifiant technique de l'agent */
