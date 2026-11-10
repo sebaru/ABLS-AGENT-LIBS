@@ -286,6 +286,11 @@
        Agent_end_with_code ( agent, EXIT_FAILURE );                          /* Pas besoin de return : Agent_end fait un exit */
      }
     agent->agent_tech_id = Json_get_string ( agent->local_config, "agent_tech_id" );
+    if (!String_is_valid_tech_id ( agent->agent_tech_id ))
+     { Info( __func__, agent_classe, NULL, LOG_CRIT, "The configured 'agent_tech_id' is not valid, exiting." );
+       printf ( "The configured 'agent_tech_id' is not valid, exiting.\n" );
+       Agent_end_with_code ( agent, EXIT_FAILURE );
+     }
     gchar config_file_with_tech_id[64];
     g_snprintf ( config_file_with_tech_id, sizeof(config_file_with_tech_id),
                  "/etc/abls/abls-agent-%s@%s.conf", agent->agent_classe, agent->agent_tech_id );
@@ -310,10 +315,20 @@
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_uuid', in config, exiting." );
           Agent_end_with_code ( agent, EXIT_FAILURE );                       /* Pas besoin de return : Agent_end fait un exit */
         }
+       if (!UUID_is_valid ( Json_get_string ( agent->local_config, "domain_uuid" ) ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "The configured 'domain_uuid' is not valid, exiting." );
+          printf ( "The configured 'domain_uuid' is not valid, exiting.\n" );
+          Agent_end_with_code ( agent, EXIT_FAILURE );
+        }
 
        if (!Json_has_member( agent->local_config, "domain_secret" ))
         { Info( __func__, agent_classe, NULL, LOG_CRIT, "There is no 'domain_secret', in config, exiting." );
           Agent_end_with_code ( agent, EXIT_FAILURE );                       /* Pas besoin de return : Agent_end fait un exit */
+        }
+       if (!UUID_is_valid ( Json_get_string ( agent->local_config, "server_uuid" ) ))
+        { Info( __func__, agent_classe, NULL, LOG_CRIT, "The configured 'server_uuid' is not valid, exiting." );
+          printf ( "The configured 'server_uuid' is not valid, exiting.\n" );
+          Agent_end_with_code ( agent, EXIT_FAILURE );
         }
       }
 
