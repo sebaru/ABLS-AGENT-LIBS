@@ -141,7 +141,7 @@
   { if (!agent) return(NULL);
 
     JsonNode *ReponseNode = NULL;
-    gint http_code;
+    glong http_code = 0;
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
     if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Request to %s: Malloc buffer failed", url ); goto end; }
@@ -151,7 +151,7 @@
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);                               /* Recupération du code retour */
-    Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "Request to %s: HttpCode = %d", url, http_code );
+    Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "Request to %s: HttpCode = %ld", url, http_code );
 
     if( res != CURLE_OK )
      { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Curl_easy_perform failed: %s", url, curl_easy_strerror(res) ); }
@@ -162,7 +162,7 @@
         }
        else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "No body received" );
      }
-    else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: HttpCode = %d", url, http_code );
+    else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: HttpCode = %ld", url, http_code );
 end:
     if (buffer)                                                                                                 /* Si reponse */
      { if(buffer->body) g_free(buffer->body);                                                           /* On free la réponse */
@@ -305,6 +305,7 @@ end:
     if (http_code!=200)
      { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "%s Error %d for '%s'", URI, http_code, url );
        Json_unref ( ReponseNode );                                        /* plus besoin de la response puisque code d'erreur */
+       ReponseNode = NULL;
        gchar *nom_fichier = Http_Query_to_cache ( agent, url );
        if (nom_fichier)
         { ReponseNode = Json_read_from_file ( nom_fichier );                                      /* Trying to get from cache */
