@@ -164,6 +164,8 @@
  void Agent_loop ( struct ABLS_AGENT *agent )
   { if (!agent) return;
 
+    Agent_process_signals ( agent );                                          /* Logs et dumps des signaux reçus entre-temps */
+
     static guint  tps_nbr_tour = 0;
     static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
     static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
@@ -175,7 +177,7 @@
 
     Agent_send_comm_to_master ( agent, agent->comm_status );
 
-    guint now = agent->Top;
+    guint now = Agent_signals_get_top();
 /********************************************************* tour par secondes **************************************************/
     if ( tps_next_update <= now )                                                                    /* Toutes les 1 secondes */
      { agent->tps_value = tps_nbr_tour;
@@ -490,7 +492,9 @@
  void Agent_end_with_code ( struct ABLS_AGENT *agent, gint code )
   { if (!agent) return;
 
-    if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
+    Agent_process_signals ( agent );                                                  /* Logs des signaux reçus avant l'arret */
+    if (agent->Agent_run == AGENT_NEED_TO_RESTART && !Agent_signals_stop_requested())      /* Un signal d'arret annule le restart */
+     { Agent_restart ( agent ); }                                                     /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
     Agent_status_stack_push ( agent, g_strdup_printf ( "Agent is stopped (%d)", code ) );            /* Publié par Agent_stop */
     Agent_stop ( agent );
@@ -625,12 +629,12 @@
 
  guint Agent_get_top ( struct ABLS_AGENT *agent )
   { if (!agent) return(0);
-    return(agent->Top);
+    return(Agent_signals_get_top());
   }
 
  gboolean Agent_is_running ( struct ABLS_AGENT *agent )
   { if (!agent) return(FALSE);
-    return(agent->Agent_run == AGENT_IS_RUNNING);
+    return(agent->Agent_run == AGENT_IS_RUNNING && !Agent_signals_stop_requested());
   }
 
  gboolean Agent_is_apt ( struct ABLS_AGENT *agent )
