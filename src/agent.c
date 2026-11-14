@@ -164,9 +164,11 @@
  void Agent_loop ( struct ABLS_AGENT *agent )
   { if (!agent) return;
 
+    Agent_process_signals ( agent );                                          /* Logs et dumps des signaux reçus entre-temps */
+
     static guint  tps_nbr_tour = 0;
     static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
-    static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
+    static guint  tps_delai = 10000;                 /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
 
     gboolean mqtt_api_connected = Mqtt_is_connected ( agent->mqtt_api );
     if (mqtt_api_connected && !agent->mqtt_api_was_connected)
@@ -175,16 +177,16 @@
 
     Agent_send_comm_to_master ( agent, agent->comm_status );
 
-    guint now = agent->Top;
+    guint now = Agent_signals_get_top();
 /********************************************************* tour par secondes **************************************************/
     if ( tps_next_update <= now )                                                                    /* Toutes les 1 secondes */
      { agent->tps_value = tps_nbr_tour;
        tps_nbr_tour = 0;
        if(agent->tps_value > agent->tps_consigne)
-        { tps_delai += 50; } else if(tps_delai>0) { tps_delai -= 50; }                        /* Ajustemet du délai d'attente */
+        { tps_delai += 1000; } else if(tps_delai>0) { tps_delai -= 1000; }                        /* Ajustemet du délai d'attente */
        tps_next_update = now + 10;
      } else tps_nbr_tour++;
-    usleep(tps_delai);
+    g_usleep(tps_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= now )             /* Toutes les minutes + Init */
@@ -364,6 +366,10 @@
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
+    if (agent->tps_consigne <= 0 || agent->tps_consigne > G_MAXUINT)
+     { Info( __func__, agent_classe, agent->agent_tech_id, LOG_WARNING, "Invalid 'tps' value; using default 50" );
+       agent->tps_consigne = 50;
+     }
     agent->Agent_run     = AGENT_IS_RUNNING;
 
     Json_to_log ( __func__, "local_config", agent->agent_tech_id, LOG_INFO, agent->local_config );            /* Print config */
@@ -470,7 +476,7 @@
     Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Agent_status_publish ( agent, TRUE, FALSE );            /* Une déconnexion propre ne déclenche pas le testament du broker */
-    sleep(1);                                                        /* Laisse partir les derniers messages avant déconnexion */
+    g_usleep ( G_USEC_PER_SEC*1 );                                   /* Laisse partir les derniers messages avant déconnexion */
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
@@ -490,7 +496,9 @@
  void Agent_end_with_code ( struct ABLS_AGENT *agent, gint code )
   { if (!agent) return;
 
-    if (agent->Agent_run == AGENT_NEED_TO_RESTART) { Agent_restart ( agent ); }       /* ne revient pas, pas besoin de return */
+    Agent_process_signals ( agent );                                                  /* Logs des signaux reçus avant l'arret */
+    if (agent->Agent_run == AGENT_NEED_TO_RESTART && !Agent_signals_stop_requested())      /* Un signal d'arret annule le restart */
+     { Agent_restart ( agent ); }                                                     /* ne revient pas, pas besoin de return */
     Info( __func__, agent->agent_classe, agent->agent_tech_id, LOG_NOTICE, "Agent is stopping." );
     Agent_status_stack_push ( agent, g_strdup_printf ( "Agent is stopped (%d)", code ) );            /* Publié par Agent_stop */
     Agent_stop ( agent );
@@ -625,12 +633,12 @@
 
  guint Agent_get_top ( struct ABLS_AGENT *agent )
   { if (!agent) return(0);
-    return(agent->Top);
+    return(Agent_signals_get_top());
   }
 
  gboolean Agent_is_running ( struct ABLS_AGENT *agent )
   { if (!agent) return(FALSE);
-    return(agent->Agent_run == AGENT_IS_RUNNING);
+    return(agent->Agent_run == AGENT_IS_RUNNING && !Agent_signals_stop_requested());
   }
 
  gboolean Agent_is_apt ( struct ABLS_AGENT *agent )

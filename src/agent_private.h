@@ -64,17 +64,20 @@
 
     guint telemetrie_next_update;
     JsonNode *ai_nbr_tour_par_sec;                                                                        /* Tour par seconde */
-    JsonNode *ai_rss_mem;                                                                                      /* RSS */
-    JsonNode *ai_virt_mem;                                                                                    /* Mémoire virtuelle */
+    JsonNode *ai_rss_mem;                                                                                              /* RSS */
+    JsonNode *ai_virt_mem;                                                                               /* Mémoire virtuelle */
     JsonNode *ai_log_par_min;                                                                              /* Logs par minute */
 
     GSList  *status_stack;                                   /* Pile LIFO des status de l'agent. La tete est le status publié */
     GRWLock  status_stack_lock;
 
-    struct itimerval timer;
-    guint Top;                                                                                          /* dixième de seconde */
     void *vars;                                                               /* Pointeur vers les variables de run du module */
   };
+
+/* Fonctions internes, partagées entre signal.c et agent.c (non exposées dans le header public).                              */
+ extern void     Agent_process_signals        ( struct ABLS_AGENT *agent );
+ extern guint    Agent_signals_get_top        ( void );
+ extern gboolean Agent_signals_stop_requested ( void );
 
 #endif /* _ABLS_AGENT_LIBS_AGENT_PRIVATE_H_ */
 /*----------------------------------------------------------------------------------------------------------------------------*/

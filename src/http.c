@@ -81,77 +81,101 @@
     return(chunksize);
   }
 /******************************************************************************************************************************/
-/* Http_Add_signature: Ajoute les headers et la signature a une requete CURL                                                  */
-/* Entrée: L'agent, le CURL et le payload prévu                                                                               */
-/* Sortie: aucune, les headers et signatures sont mis à jour dans le CURL                                                     */
+/* Http_Header_append: Ajoute un header à une liste, sans perdre la liste si l'ajout échoue                                   */
+/* Entrée: l'adresse de la liste de headers et le header à ajouter                                                            */
+/* Sortie: TRUE si ajouté. Si FALSE, la liste est entièrement libérée et *headers vaut NULL                                   */
 /******************************************************************************************************************************/
- static void Http_Add_signature ( struct ABLS_AGENT *agent, CURL *curl, gchar *payload )
-  { if (!agent) return;
+ static gboolean Http_Header_append ( struct curl_slist **headers, const gchar *header )
+  { struct curl_slist *new_headers = curl_slist_append ( *headers, header );
+    if (!new_headers)                                              /* curl_slist_append ne libère pas la liste en cas d'échec */
+     { curl_slist_free_all ( *headers );
+       *headers = NULL;
+       return(FALSE);
+     }
+    *headers = new_headers;
+    return(TRUE);
+  }
+/******************************************************************************************************************************/
+/* Http_Add_signature: Prépare les headers et la signature d'une requete                                                      */
+/* Entrée: L'agent, le payload prévu et l'adresse où mettre la liste de headers                                               */
+/* Sortie: TRUE si *headers est prête, à passer à Http_Query qui la libère. Sinon FALSE et *headers vaut NULL                 */
+/******************************************************************************************************************************/
+ static gboolean Http_Add_signature ( struct ABLS_AGENT *agent, gchar *payload, struct curl_slist **headers )
+  { if (!headers) return(FALSE);
+    *headers = NULL;
+    if (!agent) return(FALSE);
 
     struct curl_slist *all_headers = NULL;                                                        /* Gestion des headers HTTP */
     gchar timestamp[32];                                                                 /* On récupère la date de la requete */
     g_snprintf( timestamp, sizeof(timestamp), "%" G_GINT64_FORMAT, (gint64)time(NULL) );
 
 /*------------------------------------------------ Préparation des headers ---------------------------------------------------*/
-    all_headers = curl_slist_append( all_headers, "Content-Type: application/json" );
+    if (!Http_Header_append( &all_headers, "Content-Type: application/json" )) return(FALSE);
     gchar chaine[256];
     g_snprintf( chaine, sizeof(chaine), "Origin: %s", "abls-habitat.fr" );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-DOMAIN: %s", agent->domain_uuid );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-SERVER: %s", agent->server_uuid );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-AGENT: %s", agent->agent_tech_id );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-TIMESTAMP: %s", timestamp );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
 /*---------------------------------------------- Calcul de la signature ------------------------------------------------------*/
     unsigned char hash_bin[EVP_MAX_MD_SIZE];
     guint md_len;
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();                                                                   /* Calcul du SHA1 */
-    EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
-    EVP_DigestUpdate(mdctx, agent->domain_uuid,   strlen(agent->domain_uuid));
-    EVP_DigestUpdate(mdctx, agent->server_uuid,   strlen(agent->server_uuid));
-    EVP_DigestUpdate(mdctx, agent->agent_tech_id, strlen(agent->agent_tech_id));
-    EVP_DigestUpdate(mdctx, agent->domain_secret, strlen(agent->domain_secret));
-    if (payload) EVP_DigestUpdate(mdctx, payload, strlen(payload));
-    EVP_DigestUpdate(mdctx, timestamp,            strlen(timestamp));
-    EVP_DigestFinal_ex(mdctx, hash_bin, &md_len);
-    EVP_MD_CTX_free(mdctx);
+    gboolean digest_ok = mdctx && EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) == 1
+                               && EVP_DigestUpdate(mdctx, agent->domain_uuid,   strlen(agent->domain_uuid))   == 1
+                               && EVP_DigestUpdate(mdctx, agent->server_uuid,   strlen(agent->server_uuid))   == 1
+                               && EVP_DigestUpdate(mdctx, agent->agent_tech_id, strlen(agent->agent_tech_id)) == 1
+                               && EVP_DigestUpdate(mdctx, agent->domain_secret, strlen(agent->domain_secret)) == 1
+                               && (!payload || EVP_DigestUpdate(mdctx, payload, strlen(payload)) == 1)
+                               && EVP_DigestUpdate(mdctx, timestamp,            strlen(timestamp))            == 1
+                               && EVP_DigestFinal_ex(mdctx, hash_bin, &md_len) == 1;
+    EVP_MD_CTX_free(mdctx);                                                                          /* Accepte un mdctx NULL */
+    if (!digest_ok)
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Signature digest failed" );
+       curl_slist_free_all ( all_headers );
+       return(FALSE);
+     }
     guchar signature[64];
     EVP_EncodeBlock( signature, hash_bin, 32 );                                 /* Encodage et signature 256 bits -> 32 bytes */
 
     g_snprintf( chaine, sizeof(chaine), "X-ABLS-SIGNATURE: %s", signature );
-    all_headers = curl_slist_append( all_headers, chaine );
+    if (!Http_Header_append( &all_headers, chaine )) return(FALSE);
 
-/*------------------------------------------- Fin des hearders ---------------------------------------------------------------*/
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, all_headers);
+/*------------------------------------------- Fin des headers ----------------------------------------------------------------*/
+    *headers = all_headers;
+    return(TRUE);
   }
 /******************************************************************************************************************************/
 /* Http_Query: Réalise une requete HTTP                                                                                       */
-/* Entrée : l'agent et la structure CURL                                                                                      */
-/* Sortie : le noeud JSON de la réponse                                                                                       */
+/* Entrée : l'agent, l'url, la structure CURL et la liste de headers (NULL si aucun)                                          */
+/* Sortie : le noeud JSON de la réponse. La liste de headers est toujours libérée par Http_Query                              */
 /******************************************************************************************************************************/
- static JsonNode *Http_Query ( struct ABLS_AGENT *agent, gchar *url, CURL *curl )
-  { if (!agent) return(NULL);
+ static JsonNode *Http_Query ( struct ABLS_AGENT *agent, gchar *url, CURL *curl, struct curl_slist *headers )
+  { if (!agent) { curl_slist_free_all ( headers ); return(NULL); }
 
     JsonNode *ReponseNode = NULL;
-    gint http_code;
+    glong http_code = 0;
 
     struct HTTP_BUFFER *buffer = g_try_malloc0( sizeof(struct HTTP_BUFFER) );     /* Buffer temporaire de récup de la reponse */
     if (!buffer) { Info( __func__, "http", agent->agent_tech_id, LOG_ALERT, "Request to %s: Malloc buffer failed", url ); goto end; }
     buffer->agent = agent;
     curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, Http_Write_CB );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, buffer );
+    if (headers) curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);                               /* Recupération du code retour */
-    Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "Request to %s: HttpCode = %d", url, http_code );
+    Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "Request to %s: HttpCode = %ld", url, http_code );
 
     if( res != CURLE_OK )
      { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Curl_easy_perform failed: %s", url, curl_easy_strerror(res) ); }
@@ -162,8 +186,12 @@
         }
        else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "No body received" );
      }
-    else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: HttpCode = %d", url, http_code );
+    else Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: HttpCode = %ld", url, http_code );
 end:
+    if (headers)
+     { curl_easy_setopt( curl, CURLOPT_HTTPHEADER, NULL );             /* CURL ne copie pas la liste: il ne doit plus la voir */
+       curl_slist_free_all( headers );
+     }
     if (buffer)                                                                                                 /* Si reponse */
      { if(buffer->body) g_free(buffer->body);                                                           /* On free la réponse */
        g_free(buffer);
@@ -213,8 +241,10 @@ end:
      }
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
-    Http_Add_signature ( agent, curl, payload );                                        /* Ajoute les headers et la signature */
-    ReponseNode = Http_Query ( agent, url, curl );                                                      /* Réalise la requete */
+    struct curl_slist *headers = NULL;                                                              /* Libérée par Http_Query */
+    if (!Http_Add_signature ( agent, payload, &headers ))                               /* Ajoute les headers et la signature */
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Signature failed", url ); goto end; }
+    ReponseNode = Http_Query ( agent, url, curl, headers );                                             /* Réalise la requete */
 
 end:
     if (payload) g_free(payload);                                                                /* free the "string" payload */
@@ -241,7 +271,7 @@ end:
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT, 10L );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT, 15L );
 
-    JsonNode *ReponseNode = Http_Query ( agent, url, curl );                                            /* Réalise la requete */
+    JsonNode *ReponseNode = Http_Query ( agent, url, curl, NULL );                                      /* Réalise la requete */
     curl_easy_cleanup(curl);
     return(ReponseNode);
   }
@@ -296,8 +326,11 @@ end:
     curl_easy_setopt( curl, CURLOPT_URL, url );
 
 /*------------------------------------------------ Execution du cURL ---------------------------------------------------------*/
-    Http_Add_signature ( agent, curl, NULL );                                           /* Ajoute les headers et la signature */
-    JsonNode *ReponseNode = Http_Query ( agent, url, curl );                                            /* Réalise la requete */
+    JsonNode *ReponseNode = NULL;
+    struct curl_slist *headers = NULL;                                                              /* Libérée par Http_Query */
+    if (!Http_Add_signature ( agent, NULL, &headers ))                                  /* Ajoute les headers et la signature */
+     { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Request to %s: Signature failed", url ); goto end; }
+    ReponseNode = Http_Query ( agent, url, curl, headers );                                             /* Réalise la requete */
     if (!ReponseNode) { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "Error with Http_Get %s", url ); goto end; }
     gint http_code = Json_get_int ( ReponseNode, "http_code" );
     Info( __func__, "http", agent->agent_tech_id, LOG_DEBUG, "%s Status %d for '%s'", URI, http_code, url );
@@ -305,6 +338,7 @@ end:
     if (http_code!=200)
      { Info( __func__, "http", agent->agent_tech_id, LOG_ERR, "%s Error %d for '%s'", URI, http_code, url );
        Json_unref ( ReponseNode );                                        /* plus besoin de la response puisque code d'erreur */
+       ReponseNode = NULL;
        gchar *nom_fichier = Http_Query_to_cache ( agent, url );
        if (nom_fichier)
         { ReponseNode = Json_read_from_file ( nom_fichier );                                      /* Trying to get from cache */
