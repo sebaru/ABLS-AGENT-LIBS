@@ -168,7 +168,7 @@
 
     static guint  tps_nbr_tour = 0;
     static time_t tps_next_update = 0;                                       /* Délai de calcul du nombre de tour par seconde */
-    static guint  tps_delai = 1000;                  /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
+    static guint  tps_delai = 10000;                 /* délai inhérent a l'atteinte de la cible du nombre de tour par seconde */
 
     gboolean mqtt_api_connected = Mqtt_is_connected ( agent->mqtt_api );
     if (mqtt_api_connected && !agent->mqtt_api_was_connected)
@@ -183,10 +183,10 @@
      { agent->tps_value = tps_nbr_tour;
        tps_nbr_tour = 0;
        if(agent->tps_value > agent->tps_consigne)
-        { tps_delai += 50; } else if(tps_delai>0) { tps_delai -= 50; }                        /* Ajustemet du délai d'attente */
+        { tps_delai += 1000; } else if(tps_delai>0) { tps_delai -= 1000; }                        /* Ajustemet du délai d'attente */
        tps_next_update = now + 10;
      } else tps_nbr_tour++;
-    usleep(tps_delai);
+    g_usleep(tps_delai);
 
 /********************************************************* Toutes les minutes *************************************************/
     if (agent->telemetrie_next_update == 0 || agent->telemetrie_next_update <= now )             /* Toutes les minutes + Init */
@@ -472,7 +472,7 @@
     Agent_disable_signals();
     Agent_send_comm_to_master ( agent, FALSE );
     Agent_status_publish ( agent, TRUE, FALSE );            /* Une déconnexion propre ne déclenche pas le testament du broker */
-    sleep(1);                                                        /* Laisse partir les derniers messages avant déconnexion */
+    g_usleep ( G_USEC_PER_SEC*1 );                                   /* Laisse partir les derniers messages avant déconnexion */
     Mqtt_stop ( agent->mqtt_api );
     Mqtt_stop ( agent->mqtt_local );
     if (agent->vars) { g_free(agent->vars); }
