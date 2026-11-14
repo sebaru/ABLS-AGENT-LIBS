@@ -55,28 +55,28 @@
 /******************************************************************************************************************************/
  JsonNode *Agent_get_mqtt_api_message ( struct ABLS_AGENT *agent )
   { if (!agent || !agent->mqtt_api) return(NULL);
+encore:
     JsonNode *api_message = Mqtt_get_message ( agent->mqtt_api );
-    if (api_message)
-     { if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "LOG" ) )
-        { if ( Json_has_member ( api_message, "log_level" ) )
-           { gint log_level = Json_get_int ( api_message, "log_level" );
-             Info_change_log_level ( log_level );
-           }
-          else if ( Json_has_member ( api_message, "debug" ) )
-           { gchar *facility = Json_get_string ( api_message, "debug" );
-             if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
-           }
-          else if ( Json_has_member ( api_message, "undebug" ) )
-           { gchar *facility = Json_get_string ( api_message, "undebug" );
-             if (facility) Info_undebug_facility ( agent->agent_tech_id, facility );
-           }
-        }
-       else return ( api_message );                                      /* Transfert directement pour traitement par l'agent */
-     }
-    Json_unref ( api_message );                       /* Message traité en pre-emption par la librairie, on libère la mémoire */
-    return(NULL);
-  }
+    if (!api_message) return(NULL);
 
+    if ( Mqtt_topic_is ( api_message, 4, "+", "AGENT", agent->agent_tech_id, "LOG" ) )
+     { if ( Json_has_member ( api_message, "log_level" ) )
+        { gint log_level = Json_get_int ( api_message, "log_level" );
+          Info_change_log_level ( log_level );
+        }
+       else if ( Json_has_member ( api_message, "debug" ) )
+        { gchar *facility = Json_get_string ( api_message, "debug" );
+          if (facility) Info_debug_facility ( agent->agent_tech_id, facility );
+        }
+       else if ( Json_has_member ( api_message, "undebug" ) )
+        { gchar *facility = Json_get_string ( api_message, "undebug" );
+          if (facility) Info_undebug_facility ( agent->agent_tech_id, facility );
+        }
+     }
+    else return ( api_message );                                         /* Transfert directement pour traitement par l'agent */
+    Json_unref ( api_message );                       /* Message traité en pre-emption par la librairie, on libère la mémoire */
+    goto encore;
+  }
 /******************************************************************************************************************************/
 /* Agent_send_mqtt_api_message: Envoi MQTT vers l'API en préfixant le topic par le domain_uuid                                */
 /* Entrée: Agent, JsonNode, flag retain et topic relatif au domaine (variadique)                                              */
