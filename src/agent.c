@@ -366,6 +366,10 @@
     agent->domain_secret = Json_get_string ( agent->local_config, "domain_secret" );
     agent->dry_run       = Json_get_bool   ( agent->local_config, "dry_run" );
     agent->tps_consigne  = Json_get_int    ( agent->local_config, "tps" );
+    if (agent->tps_consigne <= 0 || agent->tps_consigne > G_MAXUINT)
+     { Info( __func__, agent_classe, agent->agent_tech_id, LOG_WARNING, "Invalid 'tps' value; using default 50" );
+       agent->tps_consigne = 50;
+     }
     agent->Agent_run     = AGENT_IS_RUNNING;
 
     Json_to_log ( __func__, "local_config", agent->agent_tech_id, LOG_INFO, agent->local_config );            /* Print config */
