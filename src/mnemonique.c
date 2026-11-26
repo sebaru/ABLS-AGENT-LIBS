@@ -213,20 +213,21 @@
 /* Sortie: néant                                                                                                              */
 /******************************************************************************************************************************/
  void Mnemo_create_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit, gint heure, gint minute )
-  { if (!agent) return;
+  { if (!agent || !bit) return;
 
     JsonNode *node = Json_create();
     if (!node) return;
+    /* Le bit HORLOGE porte agent_tech_id/agent_acronyme, l'API attend tech_id/acronyme */
     Json_add_string ( node, "classe", "HORLOGE" );
-    Json_add_string ( node, "tech_id", Json_get_string ( bit, "tech_id" ) );
-    Json_add_string ( node, "acronyme", Json_get_string ( bit, "acronyme" ) );
+    Json_add_string ( node, "tech_id", Json_get_string ( bit, "agent_tech_id" ) );
+    Json_add_string ( node, "acronyme", Json_get_string ( bit, "agent_acronyme" ) );
     Json_add_int    ( node, "heure", heure );
     Json_add_int    ( node, "minute", minute );
     JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/add/tick", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR,
-                 "Could not add HORLOGE tick %s:%d:%d to API",
-                 Json_get_string ( bit, "acronyme" ), heure, minute );
+                 "Could not add HORLOGE tick %s:%02d:%02d to API",
+                 Json_get_string ( bit, "agent_acronyme" ), heure, minute );
      }
     Json_unref ( api_result );
     Json_unref ( node );
@@ -238,13 +239,20 @@
 /******************************************************************************************************************************/
  void Mnemo_delete_HORLOGE_tick ( struct ABLS_AGENT *agent, JsonNode *bit )
   { if (!agent || !bit) return;
-    Json_add_string ( bit, "classe", "HORLOGE" );
-    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/del/tick", bit );
+
+    JsonNode *node = Json_create();
+    if (!node) return;
+    /* Le bit HORLOGE porte agent_tech_id/agent_acronyme, l'API attend tech_id/acronyme */
+    Json_add_string ( node, "classe", "HORLOGE" );
+    Json_add_string ( node, "tech_id", Json_get_string ( bit, "agent_tech_id" ) );
+    Json_add_string ( node, "acronyme", Json_get_string ( bit, "agent_acronyme" ) );
+    JsonNode *api_result = Http_Post_to_global_API ( agent, "/run/horloge/del/tick", node );
     if (!api_result || Json_get_int ( api_result, "http_code" ) != 200)
      { Info( __func__, "mnemo", agent->agent_tech_id, LOG_ERR,
-                 "Could not DEL HORLOGE tick for '%s'", Json_get_string ( bit, "acronyme" ) );
+                 "Could not DEL HORLOGE tick for '%s'", Json_get_string ( bit, "agent_acronyme" ) );
      }
     Json_unref ( api_result );
+    Json_unref ( node );
   }
 /******************************************************************************************************************************/
 /* Mnemo_create_WATCHDOG: Créer un JSON pour un WATCHDOG                                                                      */
